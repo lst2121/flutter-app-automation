@@ -33,7 +33,7 @@ async function closeSidebar() {
   }
 }
 
-// Enhanced keyboard handling with visibility check
+// Helper function to hide keyboard
 async function hideKeyboard() {
   console.log('⌨️ Checking keyboard visibility...');
   try {
@@ -49,27 +49,29 @@ async function hideKeyboard() {
     }
   } catch (error) {
     console.log('ℹ️ Could not check keyboard status:', error.message);
-    // Try to hide anyway
     try {
       await driver.hideKeyboard();
-      console.log('✅ Keyboard hidden successfully (fallback)');
+      console.log('✅ Keyboard hidden successfully');
       await driver.pause(500);
       return true;
     } catch (hideError) {
-      console.log('ℹ️ No keyboard to hide');
+      console.log('⚠️ Could not hide keyboard:', hideError.message);
       return false;
     }
   }
 }
 
-// Retry wrapper for flaky operations
+// Helper function to retry operations
 async function retry(fn, maxAttempts = 3, operationName = 'Operation') {
-  for (let i = 0; i < maxAttempts; i++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      console.log(`🔄 ${operationName} attempt ${attempt}/${maxAttempts}`);
       return await fn();
-    } catch (e) {
-      if (i === maxAttempts - 1) throw e;
-      console.log(`🔄 Retrying ${operationName} (${i + 1}/${maxAttempts})...`);
+    } catch (error) {
+      console.log(`⚠️ ${operationName} attempt ${attempt} failed:`, error.message);
+      if (attempt === maxAttempts) {
+        throw error;
+      }
       await driver.pause(1000);
     }
   }
@@ -78,9 +80,7 @@ async function retry(fn, maxAttempts = 3, operationName = 'Operation') {
 // Helper function to scroll down
 async function scrollDown() {
   console.log('🔄 Scrolling down...');
-  
-  // Hide keyboard before scrolling to prevent interference
-  await hideKeyboard();
+  await closeSidebar();
   
   await driver.performActions([{
     type: 'pointer',
@@ -98,7 +98,7 @@ async function scrollDown() {
   await driver.pause(1500);
 }
 
-// Enhanced dropdown selection with retry logic
+// Helper function to select from dropdown
 async function selectFromDropdown(dropdownLocator, options, dropdownName) {
   return await retry(async () => {
     console.log(`📋 Selecting ${dropdownName}...`);
@@ -193,7 +193,7 @@ describe('Complete Registration Form Test', () => {
     await registrationPage.fillEmail('johndoe@example.com');
     
     // Fill Phone
-    await registrationPage.fillPhone('+19876543210');
+    await registrationPage.fillPhone('9876543210');
     
     // Fill Address
     await registrationPage.fillAddress('123 Main Street');
@@ -274,20 +274,36 @@ describe('Complete Registration Form Test', () => {
     // Step 7: Fill Zip Code
     console.log('\n📮 Step 7: Filling Zip Code...');
     try {
-      // Use content-desc locator for Zip Code field
-      const zipField = await $('//android.widget.EditText[preceding-sibling::android.view.View[@content-desc="Zip Code *"]]');
-      if (await zipField.isDisplayed()) {
-        console.log('📝 Found Zip Code field using content-desc locator');
-        await zipField.click();
-        await driver.pause(500);
-        await zipField.clearValue();
-        await driver.pause(500);
-        await zipField.setValue('12345');
-        await driver.pause(1000);
-        await hideKeyboard();
-        console.log('✅ Zip Code filled successfully');
+      // Find Zip Code field by looking for the EditText after the "Zip Code *" label
+      const zipCodeLabel = await $('//android.view.View[@content-desc="Zip Code *"]');
+      if (await zipCodeLabel.isDisplayed()) {
+        // Find the EditText that follows this label
+        const zipField = await $('//android.view.View[@content-desc="Zip Code *"]/following-sibling::android.widget.EditText[1]');
+        if (await zipField.isDisplayed()) {
+          console.log('📝 Found Zip Code field using content-desc locator');
+          await zipField.click();
+          await driver.pause(500);
+          await zipField.clearValue();
+          await driver.pause(500);
+          await zipField.setValue('12345');
+          await driver.pause(1000);
+          await closeSidebar();
+          await takeScreenshot('after-zip-code');
+          console.log('✅ Zip Code filled successfully');
+          
+          // 🔧 ROLLBACK: Use working validation from debug test
+          const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+          if (!stillOnForm) {
+            throw new Error('❌ Exited form after Zip Code field - hideKeyboard() likely caused back navigation');
+          }
+          
+          // 🔄 Scroll immediately to keep in form context
+          await scrollDown();
+        } else {
+          console.log('⚠️ Zip Code input field not found after label');
+        }
       } else {
-        console.log('⚠️ Zip Code field not found');
+        console.log('⚠️ Zip Code label not found');
       }
     } catch (error) {
       console.log('⚠️ Error filling Zip Code:', error.message);
@@ -296,20 +312,36 @@ describe('Complete Registration Form Test', () => {
     // Step 8: Fill SS#/TIN#
     console.log('\n🆔 Step 8: Filling SS#/TIN#...');
     try {
-      // Use content-desc locator for SS#/TIN# field
-      const ssnField = await $('//android.widget.EditText[preceding-sibling::android.view.View[@content-desc="SS#/TIN# *"]]');
-      if (await ssnField.isDisplayed()) {
-        console.log('📝 Found SS#/TIN# field using content-desc locator');
-        await ssnField.click();
-        await driver.pause(500);
-        await ssnField.clearValue();
-        await driver.pause(500);
-        await ssnField.setValue('123-45-6789');
-        await driver.pause(1000);
-        await hideKeyboard();
-        console.log('✅ SS#/TIN# filled successfully');
+      // Find SS#/TIN# field by looking for the EditText after the "SS#/TIN# *" label
+      const ssnLabel = await $('//android.view.View[@content-desc="SS#/TIN# *"]');
+      if (await ssnLabel.isDisplayed()) {
+        // Find the EditText that follows this label - it's the next EditText after the label
+        const ssnField = await $('//android.view.View[@content-desc="SS#/TIN# *"]/following-sibling::android.widget.EditText[1]');
+        if (await ssnField.isDisplayed()) {
+          console.log('📝 Found SS#/TIN# field using content-desc locator');
+          await ssnField.click();
+          await driver.pause(500);
+          await ssnField.clearValue();
+          await driver.pause(500);
+          await ssnField.setValue('123-45-6789');
+          await driver.pause(1000);
+          await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
+          await takeScreenshot('after-ssn');
+          console.log('✅ SS#/TIN# filled successfully');
+          
+          // 🔧 ROLLBACK: Use working validation from debug test
+          const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+          if (!stillOnForm) {
+            throw new Error('❌ Exited form after SS#/TIN# field - hideKeyboard() likely caused back navigation');
+          }
+          
+          // 🔄 Scroll immediately to keep in form context
+          await scrollDown();
+        } else {
+          console.log('⚠️ SS#/TIN# input field not found after label');
+        }
       } else {
-        console.log('⚠️ SS#/TIN# field not found');
+        console.log('⚠️ SS#/TIN# label not found');
       }
     } catch (error) {
       console.log('⚠️ Error filling SS#/TIN#:', error.message);
@@ -324,7 +356,25 @@ describe('Complete Registration Form Test', () => {
     try {
       const residenceDropdown = await $('~Select Residence Status');
       if (await residenceDropdown.isDisplayed()) {
-        await selectFromDropdown('~Select Residence Status', [], 'Residence Status');
+        await residenceDropdown.click();
+        await driver.pause(2000);
+        
+        // Select first available option
+        const residenceOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
+        for (let i = 0; i < residenceOptions.length; i++) {
+          try {
+            const contentDesc = await residenceOptions[i].getAttribute('content-desc');
+            if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
+              await residenceOptions[i].click();
+              console.log(`✅ Selected Residence Status: ${contentDesc}`);
+              await driver.pause(1000);
+              await takeScreenshot('after-residence-status');
+              break;
+            }
+          } catch (error) {
+            // Continue to next option
+          }
+        }
       } else {
         console.log('⚠️ Residence Status dropdown not found');
       }
@@ -354,8 +404,18 @@ describe('Complete Registration Form Test', () => {
             await driver.pause(500);
             await field.setValue('TestPassword123!');
             await driver.pause(1000);
-            await hideKeyboard();
+            await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
+            await takeScreenshot('after-password');
             console.log('✅ Password filled successfully');
+            
+            // 🔧 ROLLBACK: Use working validation from debug test
+            const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+            if (!stillOnForm) {
+              throw new Error('❌ Exited form after Password field - hideKeyboard() likely caused back navigation');
+            }
+            
+            // 🔄 Scroll immediately to keep in form context
+            await scrollDown();
             passwordFilled = true;
             break;
           }
@@ -393,8 +453,18 @@ describe('Complete Registration Form Test', () => {
             await driver.pause(500);
             await field.setValue('TestPassword123!');
             await driver.pause(1000);
-            await hideKeyboard();
+            await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
+            await takeScreenshot('after-confirm-password');
             console.log('✅ Confirm Password filled successfully');
+            
+            // 🔧 ROLLBACK: Use working validation from debug test
+            const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+            if (!stillOnForm) {
+              throw new Error('❌ Exited form after Confirm Password field - hideKeyboard() likely caused back navigation');
+            }
+            
+            // 🔄 Scroll immediately to keep in form context
+            await scrollDown();
             confirmPasswordFilled = true;
             break;
           }
@@ -412,6 +482,13 @@ describe('Complete Registration Form Test', () => {
 
     // Step 13: Scroll down to find Register button
     console.log('\n🔄 Step 13: Scrolling down to find Register button...');
+    
+    // 🔧 FIXED: Before scrolling to Register button, confirm screen not exited
+    const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
+    if (!stillOnForm) {
+      throw new Error('❌ Exited form after confirm password step');
+    }
+    
     await scrollDown();
 
     // Step 14: Find and click Register button
@@ -448,3 +525,4 @@ describe('Complete Registration Form Test', () => {
     }
   });
 });
+
