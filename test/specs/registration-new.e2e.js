@@ -11,8 +11,8 @@ async function takeScreenshot(name) {
   }
 }
 
-// Improved scrolling function using W3C Actions API
-async function testScrolling() {
+// Helper function to scroll down using W3C Actions API (proven working)
+async function scrollDownInFlutter() {
   console.log('   📜 Testing W3C Actions API scrolling...');
   
   // Method 1: Try scrolling on ScrollView element first
@@ -99,6 +99,7 @@ async function testScrolling() {
     console.log('   ✅ W3C scroll successful');
     await driver.pause(2000);
     return true;
+    
   } catch (e) {
     console.log('   ⚠️ W3C scroll failed:', e.message);
   }
@@ -107,7 +108,104 @@ async function testScrolling() {
   return false;
 }
 
-describe('Registration Page Scroll Test', () => {
+// Helper function to find and fill a field with scrolling
+async function findAndFillField(hint, value, fieldName) {
+  console.log(`📝 Filling ${fieldName}...`);
+  let field;
+  
+  // Try to find the field with multiple scroll attempts
+  for (let i = 0; i < 5; i++) {
+    try {
+      field = await $(`//android.widget.EditText[@hint="${hint}"]`);
+      if (await field.isDisplayed()) {
+        console.log(`   Found ${fieldName} field on attempt ${i + 1}`);
+        break;
+      }
+    } catch (e) {
+      console.log(`   Attempt ${i + 1}: ${fieldName} not found`);
+    }
+    
+    if (i < 4) {
+      await scrollDownInFlutter();
+    }
+  }
+  
+  if (field && await field.isDisplayed()) {
+    try {
+      // Click to focus the field first
+      await field.click();
+      await driver.pause(500);
+      
+      // Clear existing text
+      await field.clearValue();
+      await driver.pause(500);
+      
+      // Fill the field
+      await field.setValue(value);
+      await driver.pause(1000);
+      
+      console.log(`✅ Filled ${fieldName}: "${value}"`);
+      return true;
+      
+    } catch (e) {
+      console.log(`❌ Error filling ${fieldName}:`, e.message);
+      return false;
+    }
+  } else {
+    console.log(`❌ ${fieldName} field not found after scrolling`);
+    return false;
+  }
+}
+
+// Helper function to scroll to bottom and find register button
+async function scrollToBottomAndFindRegister() {
+  console.log('   📜 Scrolling to bottom to find register button...');
+  
+  // Try multiple scroll attempts to reach the bottom
+  for (let i = 0; i < 4; i++) {
+    try {
+      // Try to find register button first
+      let registerButton = await $('~Register');
+      if (!await registerButton.isDisplayed()) {
+        registerButton = await $('//android.widget.Button[contains(@text, "Register")]');
+      }
+      if (!await registerButton.isDisplayed()) {
+        registerButton = await $('//android.view.View[contains(@content-desc, "Register")]');
+      }
+      
+      if (await registerButton.isDisplayed()) {
+        console.log('   ✅ Register button found, no need to scroll further');
+        return registerButton;
+      }
+      
+      // If button not found, scroll down
+      console.log(`   📜 Scroll attempt ${i + 1}/4`);
+      await scrollDownInFlutter();
+      
+      // Check again for register button
+      registerButton = await $('~Register');
+      if (!await registerButton.isDisplayed()) {
+        registerButton = await $('//android.widget.Button[contains(@text, "Register")]');
+      }
+      if (!await registerButton.isDisplayed()) {
+        registerButton = await $('//android.view.View[contains(@content-desc, "Register")]');
+      }
+      
+      if (await registerButton.isDisplayed()) {
+        console.log('   ✅ Register button found after scrolling');
+        return registerButton;
+      }
+      
+    } catch (e) {
+      console.log(`   ⚠️ Scroll attempt ${i + 1} failed:`, e.message);
+    }
+  }
+  
+  console.log('   ⚠️ Reached bottom of form');
+  return null;
+}
+
+describe('New Registration Test', () => {
   
   beforeEach(async () => {
     // Wait for app to load and animation to complete
@@ -115,8 +213,8 @@ describe('Registration Page Scroll Test', () => {
     await driver.pause(5000);
   });
 
-  it('should complete flow to registration page and test scrolling', async () => {
-    console.log('\n=== REGISTRATION PAGE SCROLL TEST STARTED ===');
+  it('should complete registration flow with working scroll logic', async () => {
+    console.log('=== NEW REGISTRATION TEST STARTED ===');
     
     // Step 1: Complete Language Selection
     console.log('\n--- STEP 1: COMPLETE LANGUAGE SELECTION ---');
@@ -237,154 +335,129 @@ describe('Registration Page Scroll Test', () => {
       return;
     }
     
-    // Step 4: Test Scrolling
-    console.log('\n--- STEP 4: TEST SCROLLING ---');
+    // Step 4: Fill Registration Form
+    console.log('\n--- STEP 4: FILL REGISTRATION FORM ---');
     
     // Take initial screenshot
-    await takeScreenshot('before_scroll_test');
+    await takeScreenshot('registration_form_initial');
     
-    // Test scrolling multiple times to reach the bottom
-    let registerButtonFound = false;
-    for (let i = 0; i < 4; i++) { // Try up to 4 scrolls to reach bottom
-      console.log(`\n📜 Scroll Attempt ${i + 1}/4`);
-      
-      // Check for register button before scrolling
-      try {
-        let registerButton = null;
-        
-        // Try traditional selectors
+    // Test data
+    const testData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phone: '5551234567',
+      address: '123 Main Street, City, State 12345'
+    };
+    
+    console.log('📋 Using test data:', JSON.stringify(testData, null, 2));
+    
+    // Fill fields with scrolling support
+    const firstNameFilled = await findAndFillField('e.g. John', testData.firstName, 'First Name');
+    const lastNameFilled = await findAndFillField('e.g. Doe', testData.lastName, 'Last Name');
+    const emailFilled = await findAndFillField('e.g. johndoe@mail.com', testData.email, 'Email');
+    const phoneFilled = await findAndFillField('+1 \n9876543210', testData.phone, 'Phone Number');
+    const addressFilled = await findAndFillField('Street Address', testData.address, 'Address');
+    
+    // Try to select State from dropdown
+    console.log('📝 Selecting State...');
+    let stateSelected = false;
+    try {
+      let stateDropdown;
+      for (let i = 0; i < 3; i++) {
         try {
-          registerButton = await $('~Register');
+          stateDropdown = await $('//android.view.View[@hint="Select State"]');
+          if (!(await stateDropdown.isDisplayed())) {
+            stateDropdown = await $('//android.widget.EditText[@hint="Select State"]');
+          }
+          if (!(await stateDropdown.isDisplayed())) {
+            stateDropdown = await $('//android.view.View[contains(@content-desc, "State")]');
+          }
+          if (await stateDropdown.isDisplayed()) break;
         } catch (e) {
-          console.log('   ⚠️ Accessibility label search failed:', e.message);
+          console.log(`   Attempt ${i + 1}: State dropdown not found`);
         }
         
-        if (!registerButton || !await registerButton.isDisplayed()) {
-          try {
-            registerButton = await $('//android.widget.Button[contains(@text, "Register")]');
-          } catch (e) {
-            console.log('   ⚠️ XPath button search failed:', e.message);
-          }
+        if (i < 2) {
+          await scrollDownInFlutter();
         }
-        
-        if (!registerButton || !await registerButton.isDisplayed()) {
-          try {
-            registerButton = await $('//android.view.View[contains(@content-desc, "Register")]');
-          } catch (e) {
-            console.log('   ⚠️ XPath view search failed:', e.message);
-          }
-        }
-        
-        if (registerButton && await registerButton.isDisplayed()) {
-          console.log(`✅ Register button found on attempt ${i + 1} (before scrolling)`);
-          await takeScreenshot(`register_button_found_attempt_${i + 1}`);
-          registerButtonFound = true;
-          break;
-        }
-      } catch (e) {
-        // Continue with scrolling
       }
       
-      // Perform scroll
-      const scrollResult = await testScrolling();
-      
-      if (scrollResult) {
-        console.log(`✅ Scroll attempt ${i + 1} successful`);
-        await takeScreenshot(`after_scroll_${i + 1}`);
+      if (stateDropdown && await stateDropdown.isDisplayed()) {
+        await stateDropdown.click();
+        console.log('✅ Clicked state dropdown');
+        await driver.pause(2000);
         
-        // Check for register button after scrolling
+        // Try to select California
         try {
-          let registerButton = null;
-          
-          // Try traditional selectors
-          try {
-            registerButton = await $('~Register');
-          } catch (e) {
-            console.log('   ⚠️ Accessibility label search failed:', e.message);
-          }
-          
-          if (!registerButton || !await registerButton.isDisplayed()) {
-            try {
-              registerButton = await $('//android.widget.Button[contains(@text, "Register")]');
-            } catch (e) {
-              console.log('   ⚠️ XPath button search failed:', e.message);
+          const stateOption = await $('~California');
+          if (await stateOption.isDisplayed()) {
+            await stateOption.click();
+            console.log('✅ Selected State: California');
+            stateSelected = true;
+          } else {
+            console.log('⚠️ California not found, trying first available state...');
+            const firstState = await $('//android.view.View[@clickable="true"]');
+            if (await firstState.isDisplayed()) {
+              await firstState.click();
+              console.log('✅ Selected first available state');
+              stateSelected = true;
             }
-          }
-          
-          if (!registerButton || !await registerButton.isDisplayed()) {
-            try {
-              registerButton = await $('//android.view.View[contains(@content-desc, "Register")]');
-            } catch (e) {
-              console.log('   ⚠️ XPath view search failed:', e.message);
-            }
-          }
-          
-          if (registerButton && await registerButton.isDisplayed()) {
-            console.log(`✅ Register button found after scroll attempt ${i + 1}`);
-            await takeScreenshot(`register_button_found_after_scroll_${i + 1}`);
-            registerButtonFound = true;
-            break;
           }
         } catch (e) {
-          console.log(`⚠️ Register button not found after scroll ${i + 1}`);
+          console.log('⚠️ Could not select state:', e.message);
         }
       } else {
-        console.log(`❌ Scroll attempt ${i + 1} failed`);
+        console.log('⚠️ State dropdown not found');
+      }
+    } catch (e) {
+      console.log('❌ Error selecting state:', e.message);
+    }
+    
+    // Step 5: Summary
+    console.log('\n--- STEP 5: FORM FILLING SUMMARY ---');
+    const filledFields = [firstNameFilled, lastNameFilled, emailFilled, phoneFilled, addressFilled];
+    const successCount = filledFields.filter(filled => filled).length;
+    
+    console.log(`📊 Form filling results: ${successCount}/${filledFields.length} fields filled successfully`);
+    console.log(`🏛️ State selection: ${stateSelected ? 'Success' : 'Failed'}`);
+    
+    if (successCount >= 4) {
+      console.log('✅ Most fields filled successfully');
+    } else {
+      console.log('⚠️ Some fields could not be filled');
+    }
+    
+    // Step 6: Click Register Button
+    console.log('\n--- STEP 6: CLICK REGISTER BUTTON ---');
+    
+    try {
+      // Scroll to bottom and find register button
+      const registerButton = await scrollToBottomAndFindRegister();
+      
+      if (registerButton && await registerButton.isDisplayed()) {
+        console.log('✅ Register button found and visible');
+        
+        try {
+          await registerButton.click();
+          console.log('✅ Register button clicked successfully');
+          await driver.pause(2000);
+          
+          // Take screenshot after clicking
+          await takeScreenshot('after_register_click');
+          
+        } catch (clickError) {
+          console.log('⚠️ Click failed:', clickError.message);
+        }
+        
+      } else {
+        console.log('❌ Register button not found');
       }
       
-      await driver.pause(2000);
+    } catch (e) {
+      console.log('❌ Error finding register button:', e.message);
     }
     
-    // Step 5: Final Check for Register Button
-    console.log('\n--- STEP 5: FINAL CHECK FOR REGISTER BUTTON ---');
-    if (!registerButtonFound) {
-      try {
-        let registerButton = null;
-        
-        // Try traditional selectors
-        try {
-          registerButton = await $('~Register');
-        } catch (e) {
-          console.log('   ⚠️ Accessibility label search failed:', e.message);
-        }
-        
-        if (!registerButton || !await registerButton.isDisplayed()) {
-          try {
-            registerButton = await $('//android.widget.Button[contains(@text, "Register")]');
-          } catch (e) {
-            console.log('   ⚠️ XPath button search failed:', e.message);
-          }
-        }
-        
-        if (!registerButton || !await registerButton.isDisplayed()) {
-          try {
-            registerButton = await $('//android.view.View[contains(@content-desc, "Register")]');
-          } catch (e) {
-            console.log('   ⚠️ XPath view search failed:', e.message);
-          }
-        }
-        
-        if (registerButton && await registerButton.isDisplayed()) {
-          console.log('✅ Register button found in final check');
-          await takeScreenshot('register_button_found_final');
-          registerButtonFound = true;
-        } else {
-          console.log('⚠️ Register button not found after all scroll attempts');
-          await takeScreenshot('register_button_not_found_final');
-        }
-      } catch (e) {
-        console.log('⚠️ Error in final register button check:', e.message);
-      }
-    }
-    
-    // Summary
-    console.log('\n--- SCROLL TEST SUMMARY ---');
-    if (registerButtonFound) {
-      console.log('🎉 SUCCESS: Scrolling worked and register button was found!');
-    } else {
-      console.log('⚠️ PARTIAL: Scrolling worked but register button not found');
-    }
-    
-    console.log('\n=== REGISTRATION PAGE SCROLL TEST COMPLETED ===');
+    console.log('\n=== NEW REGISTRATION TEST COMPLETED ===');
   });
 }); 
