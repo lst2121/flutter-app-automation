@@ -11,9 +11,9 @@ async function takeScreenshot(name) {
   }
 }
 
-// Improved touch-based scrolling function for UiAutomator2
+// Improved scrolling function using W3C Actions API
 async function testScrolling() {
-  console.log('   📜 Testing improved touch scrolling...');
+  console.log('   📜 Testing W3C Actions API scrolling...');
   
   // Method 1: Try scrolling on ScrollView element first
   try {
@@ -37,22 +37,30 @@ async function testScrolling() {
         console.log('   ℹ️ No keyboard to hide');
       }
       
-      // Use correct WebDriverIO touch action syntax
-      await driver.touchAction([
-        { action: 'press', x: startX, y: startY },
-        { action: 'wait', ms: 1000 },
-        { action: 'moveTo', x: startX, y: endY },
-        { action: 'release' }
-      ]);
-      console.log('   ✅ ScrollView touch scroll successful');
+      // Use W3C Actions API for scrolling
+      await driver.performActions([{
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          { type: 'pointerMove', duration: 0, x: startX, y: startY },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 500 },
+          { type: 'pointerMove', duration: 1000, x: startX, y: endY },
+          { type: 'pointerUp', button: 0 }
+        ]
+      }]);
+      await driver.releaseActions();
+      
+      console.log('   ✅ ScrollView W3C scroll successful');
       await driver.pause(2000);
       return true;
     }
   } catch (e) {
-    console.log('   ⚠️ ScrollView touch scroll failed:', e.message);
+    console.log('   ⚠️ ScrollView W3C scroll failed:', e.message);
   }
   
-  // Method 2: Fallback to screen-based touch scrolling
+  // Method 2: Fallback to screen-based W3C scrolling
   try {
     const screenSize = await driver.getWindowSize();
     const centerX = screenSize.width / 2;
@@ -60,7 +68,7 @@ async function testScrolling() {
     const endY = screenSize.height * 0.2;   // End at 20% up
     
     console.log(`   📱 Screen size: ${screenSize.width}x${screenSize.height}`);
-    console.log(`   📍 Touch scroll: (${centerX}, ${startY}) → (${centerX}, ${endY})`);
+    console.log(`   📍 W3C scroll: (${centerX}, ${startY}) → (${centerX}, ${endY})`);
     
     // Hide keyboard first to avoid interference
     try {
@@ -73,18 +81,26 @@ async function testScrolling() {
     // Wait a moment for any animations to settle
     await driver.pause(500);
     
-    // Use correct WebDriverIO touch action syntax
-    await driver.touchAction([
-      { action: 'press', x: centerX, y: startY },
-      { action: 'wait', ms: 1000 }, // Longer press
-      { action: 'moveTo', x: centerX, y: endY }, // Remove duration parameter
-      { action: 'release' }
-    ]);
-    console.log('   ✅ Touch scroll successful');
+    // Use W3C Actions API for screen-based scrolling
+    await driver.performActions([{
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: centerX, y: startY },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 500 },
+        { type: 'pointerMove', duration: 1000, x: centerX, y: endY },
+        { type: 'pointerUp', button: 0 }
+      ]
+    }]);
+    await driver.releaseActions();
+    
+    console.log('   ✅ W3C scroll successful');
     await driver.pause(2000);
     return true;
   } catch (e) {
-    console.log('   ⚠️ Touch scroll failed:', e.message);
+    console.log('   ⚠️ W3C scroll failed:', e.message);
   }
   
   console.log('   ❌ All scrolling methods failed');
