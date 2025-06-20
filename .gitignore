@@ -16,6 +16,13 @@ Anytime Shift_1.0.45_APKPure/
 # Selector files (XML dumps)
 selectors_file/
 
+# Test reports and results
+reports/
+allure-results/
+allure-report/
+*.html
+*.json
+
 # Documentation files
 *.md
 README*
