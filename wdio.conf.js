@@ -49,6 +49,11 @@ exports.config = {
       showInBrowser: true,
       collapseTests: false,
       useOnAfterCommandForScreenshot: true
+    }],
+    ['allure', {
+      outputDir: 'allure-results',
+      disableWebdriverStepsReporting: true,
+      disableWebdriverScreenshotsReporting: false,
     }]
   ],
 
