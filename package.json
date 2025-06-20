@@ -27,7 +27,14 @@
     "clean:screenshots": "rm -rf screenshots/*.png",
     "clean:all": "npm run clean:apps && npm run clean:screenshots"
   },
-  "keywords": ["flutter", "automation", "testing", "appium", "webdriverio", "hrms"],
+  "keywords": [
+    "flutter",
+    "automation",
+    "testing",
+    "appium",
+    "webdriverio",
+    "hrms"
+  ],
   "author": "",
   "license": "ISC",
   "description": "Automated testing framework for Flutter applications using WebdriverIO and Appium",
@@ -38,6 +45,7 @@
     "@wdio/mocha-framework": "^9.15.0",
     "@wdio/spec-reporter": "^9.15.0",
     "@wdio/visual-service": "^8.0.4",
+    "@rpii/wdio-html-reporter": "^1.0.0",
     "appium-uiautomator2-driver": "^4.2.3"
   }
 }

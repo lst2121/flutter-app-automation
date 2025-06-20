@@ -1,5 +1,5 @@
 const { expect } = require('@wdio/globals');
-const AppFlow = require('../pageobjects/AppFlow');
+const AppFlow = require('../../pageobjects/AppFlow');
 
 describe('Scroll After Name and Sidebar Close (Anytime Shift)', () => {
   let appFlow;

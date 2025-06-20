@@ -559,23 +559,25 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
           await driver.pause(500);
           await ssnField.clearValue();
           await driver.pause(500);
+          await ssnField.clearValue();
           await ssnField.setValue('123-45-6789');
           await driver.pause(1000);
-          await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
+          
+          // 🔧 FIXED: Don't call closeSidebar() - it might cause navigation issues
+          // Just take a screenshot and continue
           await takeScreenshot('after-ssn');
           console.log('✅ SS#/TIN# filled successfully');
           
-          // 🔧 ROLLBACK: Use working validation from debug test
-          const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+          // 🔧 FIXED: Simple validation - just check if we can still find the SS#/TIN# label
+          const stillOnForm = await $('//android.view.View[@content-desc="SS#/TIN# *"]').isDisplayed().catch(() => false);
           if (!stillOnForm) {
-            throw new Error('❌ Exited form after SS#/TIN# field - hideKeyboard() likely caused back navigation');
+            throw new Error('❌ Exited form after SS#/TIN# field');
           }
           
-          // 🔧 FIXED: No need to hide keyboard - it might cause navigation issues
-          // Just add a small pause to ensure UI is ready before proceeding
-          await driver.pause(1000); // Small pause to ensure UI is ready
+          // Small pause to ensure UI is ready before proceeding to Residence Status dropdown
+          await driver.pause(1000);
         } else {
-          console.log('⚠️ SS#/TIN# input field not found after label');
+          console.log('⚠️ SS#/TIN# field not found');
         }
       } else {
         console.log('⚠️ SS#/TIN# label not found');
@@ -584,58 +586,98 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
       console.log('⚠️ Error filling SS#/TIN#:', error.message);
     }
 
-    // Step 12: Select Residence Status
-    console.log('\n🏠 Step 12: Selecting Residence Status...');
+    // Step 11: Select Residence Status
+    console.log('\n🏠 Step 11: Selecting Residence Status...');
     try {
-      const residenceDropdown = await $('~Select Residence Status');
-      if (await residenceDropdown.isDisplayed()) {
-        await residenceDropdown.click();
-        await driver.pause(2000);
+      // 🔧 FIXED: First check if we're still on the form
+      const residenceStatusLabel = await $('~Residence Status *');
+      if (await residenceStatusLabel.isDisplayed()) {
+        console.log('✅ Residence Status label found, proceeding with dropdown selection');
         
-        // Look for dropdown options using CheckedTextView (as seen in successful state-dropdown-test)
-        console.log('🔍 Looking for Residence Status options...');
-        const residenceOptions = await $$('android=new UiSelector().className("android.widget.CheckedTextView")');
-        console.log(`🔍 Found ${residenceOptions.length} residence dropdown options`);
-        
-        if (residenceOptions.length > 0) {
-          // Select the 2nd option (index 1) if available, otherwise the first
-          const optionToSelect = residenceOptions.length > 1 ? residenceOptions[1] : residenceOptions[0];
-          await optionToSelect.click();
-          const optionText = await optionToSelect.getText();
-          console.log(`✅ Selected Residence Status option: ${optionText}`);
-          await driver.pause(1000);
-          await takeScreenshot('after-residence-status');
-        } else {
-          console.log('⚠️ No residence dropdown options found');
+        const residenceDropdown = await $('~Select Residence Status');
+        if (await residenceDropdown.isDisplayed()) {
+          console.log('📋 Opening Residence Status dropdown...');
+          await residenceDropdown.click();
+          await driver.pause(1500); // Reduced wait time to prevent timeout
           
-          // Fallback: try using the same approach as state dropdown
-          const fallbackOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
-          console.log(`🔍 Fallback: Found ${fallbackOptions.length} potential options`);
+          // Look for dropdown options using CheckedTextView (as seen in successful state-dropdown-test)
+          console.log('🔍 Looking for Residence Status options...');
+          const residenceOptions = await $$('android=new UiSelector().className("android.widget.CheckedTextView")');
+          console.log(`🔍 Found ${residenceOptions.length} residence dropdown options`);
           
-          for (let i = 0; i < fallbackOptions.length; i++) {
-            try {
-              const contentDesc = await fallbackOptions[i].getAttribute('content-desc');
-              if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
-                await fallbackOptions[i].click();
-                console.log(`✅ Selected Residence Status (fallback): ${contentDesc}`);
-                await driver.pause(1000);
-                await takeScreenshot('after-residence-status-fallback');
-                break;
+          if (residenceOptions.length > 0) {
+            // Select the 2nd option (index 1) if available, otherwise the first
+            const optionToSelect = residenceOptions.length > 1 ? residenceOptions[1] : residenceOptions[0];
+            await optionToSelect.click();
+            const optionText = await optionToSelect.getText();
+            console.log(`✅ Selected Residence Status option: ${optionText}`);
+            await driver.pause(1000);
+            await takeScreenshot('after-residence-status');
+          } else {
+            console.log('⚠️ No residence dropdown options found with CheckedTextView');
+            
+            // Fallback: try using the same approach as state dropdown
+            const fallbackOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
+            console.log(`🔍 Fallback: Found ${fallbackOptions.length} potential options`);
+            
+            let selected = false;
+            for (let i = 0; i < fallbackOptions.length && !selected; i++) {
+              try {
+                const contentDesc = await fallbackOptions[i].getAttribute('content-desc');
+                if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
+                  console.log(`📝 Attempting to select: ${contentDesc}`);
+                  
+                  // 🔧 FIXED: Add timeout and error handling for dropdown selection
+                  try {
+                    await fallbackOptions[i].click();
+                    console.log(`✅ Selected Residence Status (fallback): ${contentDesc}`);
+                    await driver.pause(1000);
+                    await takeScreenshot('after-residence-status-fallback');
+                    selected = true;
+                    
+                    // 🔧 FIXED: Verify we're still on the form after selection
+                    await driver.pause(500);
+                    const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
+                    if (!stillOnForm) {
+                      console.log('⚠️ Form may have navigated away after dropdown selection');
+                    } else {
+                      console.log('✅ Form still visible after dropdown selection');
+                    }
+                  } catch (clickError) {
+                    console.log(`⚠️ Failed to click option "${contentDesc}":`, clickError.message);
+                    // Continue to next option
+                  }
+                }
+              } catch (error) {
+                // Continue to next option
               }
-            } catch (error) {
-              // Continue to next option
+            }
+            
+            if (!selected) {
+              console.log('⚠️ No suitable Residence Status option could be selected');
             }
           }
+        } else {
+          console.log('⚠️ Residence Status dropdown not found');
         }
       } else {
-        console.log('⚠️ Residence Status dropdown not found');
+        console.log('⚠️ Residence Status label not found - may have navigated away from form');
       }
     } catch (error) {
       console.log('⚠️ Error with Residence Status dropdown:', error.message);
+      
+      // 🔧 FIXED: Check if session is still active
+      try {
+        const sessionActive = await driver.getPageSource();
+        console.log('✅ Session is still active after dropdown error');
+      } catch (sessionError) {
+        console.log('❌ Session terminated after dropdown error:', sessionError.message);
+        throw new Error('Session terminated during Residence Status dropdown selection');
+      }
     }
 
-    // Step 13: Fill Password
-    console.log('\n🔐 Step 13: Filling Password...');
+    // Step 12: Fill Password
+    console.log('\n🔐 Step 12: Filling Password...');
     try {
       // Look for password field - it might be the last EditText field
       const passwordFields = await $$('android.widget.EditText');
@@ -650,28 +692,60 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
           // If field is empty and has no hint, it's likely a password field
           if ((!hint || hint === '') && (!text || text === '') && await field.isDisplayed()) {
             console.log('📝 Found Password field');
+            
+            // Step 1: Click on password field
             await field.click();
-            await driver.pause(500);
+            console.log('🖱️ Clicked on password field');
+            await driver.pause(1000); // Wait for sidebar/keyboard to appear
+            
+            // Step 2: Wait for any sidebar or keyboard to appear
+            console.log('⏳ Waiting for sidebar/keyboard to appear...');
+            await driver.pause(2000); // Give time for UI elements to appear
+            
+            // Step 3: Input the password data
+            console.log('⌨️ Inputting password data...');
             await field.clearValue();
-            await driver.pause(500);
             await field.setValue('TestPassword123!');
             await driver.pause(1000);
-            await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
+            console.log('✅ Password data entered');
+            
+            // Step 4: Close the keyboard by hiding it
+            console.log('🔒 Closing keyboard...');
+            try {
+              await hideKeyboard();
+              console.log('✅ Keyboard hidden successfully');
+            } catch (keyboardError) {
+              console.log('⚠️ Could not hide keyboard with hideKeyboard():', keyboardError.message);
+              
+              // Fallback: Try clicking outside the field
+              console.log('🔄 Trying to click outside password field...');
+              try {
+                // Click on a safe area (top of screen)
+                await driver.executeScript('mobile: tap', { x: 200, y: 100 });
+                console.log('✅ Clicked outside password field');
+              } catch (tapError) {
+                console.log('⚠️ Could not click outside field:', tapError.message);
+              }
+            }
+            
+            await driver.pause(1000); // Wait for UI to settle
+            
             await takeScreenshot('after-password');
             console.log('✅ Password filled successfully');
             
-            // 🔧 ROLLBACK: Use working validation from debug test
-            const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
+            // 🔧 FIXED: Simple validation - check if we can still find Residence Status
+            const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
             if (!stillOnForm) {
-              throw new Error('❌ Exited form after Password field - hideKeyboard() likely caused back navigation');
+              throw new Error('❌ Exited form after Password field');
             }
             
-            // 🔄 Scroll immediately to keep in form context
+            // Scroll immediately to keep in form context
             await scrollDown();
             passwordFilled = true;
             break;
           }
         } catch (error) {
+          console.log(`⚠️ Error with password field ${i}:`, error.message);
           // Continue to next field
         }
       }
@@ -683,57 +757,84 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
       console.log('⚠️ Error filling Password:', error.message);
     }
 
-    // Step 14: Fill Confirm Password
-    console.log('\n🔐 Step 14: Filling Confirm Password...');
+    // Step 13: Fill Confirm Password
+    console.log('\n🔐 Step 13: Filling Confirm Password...');
     try {
-      // Look for confirm password field - it might be the next EditText after Password
-      const allEditTexts = await $$('android.widget.EditText');
-      let confirmPasswordFilled = false;
-      
-      for (let i = 0; i < allEditTexts.length; i++) {
-        try {
-          const field = allEditTexts[i];
-          const hint = await field.getAttribute('hint');
-          const text = await field.getAttribute('text');
-          
-          // If field is empty and has no hint, and we haven't filled it yet, it's likely confirm password
-          if ((!hint || hint === '') && (!text || text === '') && await field.isDisplayed()) {
-            console.log('📝 Found Confirm Password field');
-            await field.click();
-            await driver.pause(500);
-            await field.clearValue();
-            await driver.pause(500);
-            await field.setValue('TestPassword123!');
-            await driver.pause(1000);
-            await closeSidebar(); // 🔧 ROLLBACK: Use working approach from debug test
-            await takeScreenshot('after-confirm-password');
-            console.log('✅ Confirm Password filled successfully');
-            
-            // 🔧 ROLLBACK: Use working validation from debug test
-            const stillOnForm = await $('~Select Residence Status').isDisplayed().catch(() => false);
-            if (!stillOnForm) {
-              throw new Error('❌ Exited form after Confirm Password field - hideKeyboard() likely caused back navigation');
-            }
-            
-            // 🔄 Scroll immediately to keep in form context
-            await scrollDown();
-            confirmPasswordFilled = true;
-            break;
-          }
-        } catch (error) {
-          // Continue to next field
+      // ✅ FIX 1: Use hint="Confirm Password" to locate field more reliably
+      const confirmPasswordField = await $('//android.widget.EditText[@hint="Confirm Password"]');
+      if (await confirmPasswordField.isDisplayed()) {
+        console.log('📝 Found Confirm Password field using hint selector');
+        await confirmPasswordField.click();
+        await driver.pause(500);
+        await confirmPasswordField.clearValue();
+        await confirmPasswordField.setValue('TestPassword123!');
+        await driver.pause(1000);
+        
+        // 🔧 FIXED: Don't call closeSidebar() - it might cause navigation issues
+        await takeScreenshot('after-confirm-password');
+        console.log('✅ Confirm Password filled successfully');
+        
+        // 🔧 FIXED: Simple validation - check if we can still find Residence Status
+        const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
+        if (!stillOnForm) {
+          throw new Error('❌ Exited form after Confirm Password field');
         }
-      }
-      
-      if (!confirmPasswordFilled) {
-        console.log('⚠️ Confirm Password field not found');
+        
+        // Scroll immediately to keep in form context
+        await scrollDown();
+        confirmPasswordFilled = true;
+      } else {
+        console.log('⚠️ Confirm Password field not visible with hint selector');
+        
+        // Fallback: Look for confirm password field - it might be the next EditText after Password
+        const allEditTexts = await $$('android.widget.EditText');
+        let confirmPasswordFilled = false;
+        
+        for (let i = 0; i < allEditTexts.length; i++) {
+          try {
+            const field = allEditTexts[i];
+            const hint = await field.getAttribute('hint');
+            const text = await field.getAttribute('text');
+            
+            // If field is empty and has no hint, and we haven't filled it yet, it's likely confirm password
+            if ((!hint || hint === '') && (!text || text === '') && await field.isDisplayed()) {
+              console.log('📝 Found Confirm Password field using fallback method');
+              await field.click();
+              await driver.pause(500);
+              await field.clearValue();
+              await field.setValue('TestPassword123!');
+              await driver.pause(1000);
+              
+              // 🔧 FIXED: Don't call closeSidebar() - it might cause navigation issues
+              await takeScreenshot('after-confirm-password-fallback');
+              console.log('✅ Confirm Password filled successfully (fallback)');
+              
+              // 🔧 FIXED: Simple validation - check if we can still find Residence Status
+              const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
+              if (!stillOnForm) {
+                throw new Error('❌ Exited form after Confirm Password field');
+              }
+              
+              // Scroll immediately to keep in form context
+              await scrollDown();
+              confirmPasswordFilled = true;
+              break;
+            }
+          } catch (error) {
+            // Continue to next field
+          }
+        }
+        
+        if (!confirmPasswordFilled) {
+          console.log('⚠️ Confirm Password field not found');
+        }
       }
     } catch (error) {
       console.log('⚠️ Error filling Confirm Password:', error.message);
     }
 
-    // Step 15: Scroll down to find Register button
-    console.log('\n🔄 Step 15: Scrolling down to find Register button...');
+    // Step 14: Scroll down to find Register button
+    console.log('\n🔄 Step 14: Scrolling down to find Register button...');
     
     // 🔧 FIXED: Before scrolling to Register button, confirm screen not exited
     const stillOnForm = await $('~Residence Status *').isDisplayed().catch(() => false);
@@ -741,48 +842,75 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
       throw new Error('❌ Exited form after confirm password step');
     }
     
+    // ✅ FIX 2: Add extra scroll to make sure Register button comes into view
+    console.log('🔄 Extra Scroll to ensure Register button is visible...');
     await scrollDown();
+    await driver.pause(1500);
+    await takeScreenshot('after-extra-scroll');
+    
+    // ✅ Optional Bonus: Handle Keyboard Issues
+    // Sometimes soft keyboard hides the last fields
+    try {
+      await hideKeyboard(); // Ensure screen isn't partially blocked
+      await driver.pause(1000);
+      console.log('⌨️ Keyboard hidden to ensure full screen visibility');
+    } catch (keyboardError) {
+      console.log('⚠️ Could not hide keyboard:', keyboardError.message);
+    }
 
-    // Step 16: Find and click Register button
-    console.log('\n📝 Step 16: Finding and clicking Register button...');
+    // Step 15: Find and click Register button
+    console.log('\n📝 Step 15: Finding and clicking Register button...');
     
     // Take screenshot before looking for register button
     await takeScreenshot('before-register-search');
     
-    // Look for Register button
-    let registerButton = null;
+    // ✅ FIX 3: Wait for Register button explicitly before clicking
     try {
-      // Try different locators for Register button
+      const registerButton = await $('android=new UiSelector().textContains("Register")');
+      await registerButton.waitForDisplayed({ timeout: 10000 });
+      await takeScreenshot('before-register-click');
+      await registerButton.click();
+      console.log('✅ Register button clicked successfully!');
+      await takeScreenshot('after-register-click');
+      
+      // Capture final page source
+      console.log('📄 Capturing final page source...');
+      const finalPageSource = await driver.getPageSource();
+      fs.writeFileSync('./screenshots/page-source-after-registration.html', finalPageSource);
+      console.log('📄 Final page source saved to: ./screenshots/page-source-after-registration.html');
+      
+      console.log('🎉 COMPLETE REGISTRATION FORM TEST PASSED!');
+    } catch (error) {
+      console.log('❌ Error with Register button:', error.message);
+      
+      // Fallback: Try other selectors if the main one fails
+      console.log('🔄 Trying fallback Register button selectors...');
       const registerSelectors = [
         '~Register',
-        'android=new UiSelector().textContains("Register")',
         'android=new UiSelector().text("Register")',
         '//android.view.View[@content-desc="Register"]',
         '//android.widget.Button[@text="Register"]'
       ];
-      
+
+      let registerButton = null;
       for (const selector of registerSelectors) {
         try {
           const button = await $(selector);
           if (await button.isDisplayed()) {
             registerButton = button;
-            console.log(`✅ Found Register button using selector: ${selector}`);
+            console.log(`✅ Found Register button using fallback selector: ${selector}`);
             break;
           }
-        } catch (error) {
+        } catch (fallbackError) {
           // Continue to next selector
         }
       }
       
       if (registerButton) {
-        // Take screenshot before clicking register button
-        await takeScreenshot('before-register-click');
-        
+        await takeScreenshot('before-register-click-fallback');
         await registerButton.click();
-        console.log('✅ Register button clicked successfully!');
-        
-        // Take final screenshot
-        await takeScreenshot('after-register-click');
+        console.log('✅ Register button clicked successfully (fallback)!');
+        await takeScreenshot('after-register-click-fallback');
         
         // Capture final page source
         console.log('📄 Capturing final page source...');
@@ -794,9 +922,6 @@ describe('Fill and Submit Registration Form (Debug APK)', () => {
       } else {
         throw new Error('❌ Register button not found with any selector');
       }
-    } catch (error) {
-      console.log('❌ Error with Register button:', error.message);
-      throw error;
     }
   });
 }); 

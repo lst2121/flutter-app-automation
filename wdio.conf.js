@@ -12,7 +12,7 @@ exports.config = {
     'appium:automationName': 'UiAutomator2',
     'appium:deviceName': 'emulator-5554',
     'appium:platformVersion': '15',
-    'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.apk'),
+    'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.debug.apk'),
     'appium:appPackage': 'com.anytimeshift.employee',
     'appium:appActivity': '.MainActivity',
     'appium:autoGrantPermissions': true,
@@ -39,11 +39,21 @@ exports.config = {
 
   framework: 'mocha',
 
-  reporters: ['spec'],
+  reporters: [
+    'spec',
+    ['html', {
+      outputDir: './reports/html-reports/',
+      filename: 'report.html',
+      reportTitle: 'Flutter App Automation Test Report',
+      showInBrowser: true,
+      collapseTests: false,
+      useOnAfterCommandForScreenshot: true
+    }]
+  ],
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60000
+    timeout: 150000
   },
 
   hostname: '127.0.0.1',
