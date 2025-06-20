@@ -1,4 +1,5 @@
 const { join } = require('path');
+const HtmlReporter = require('@rpii/wdio-html-reporter').HtmlReporter;
 
 exports.config = {
   runner: 'local',
@@ -35,14 +36,14 @@ exports.config = {
       basePath: '/'
     }
   }]],
-  
 
   framework: 'mocha',
 
   reporters: [
     'spec',
-    ['html', {
-      outputDir: './reports/html-reports/',
+    [HtmlReporter, {
+      debug: false,
+      outputDir: join(__dirname, 'reports', 'html-reports'),
       filename: 'report.html',
       reportTitle: 'Flutter App Automation Test Report',
       showInBrowser: true,
@@ -59,5 +60,5 @@ exports.config = {
   hostname: '127.0.0.1',
   port: 4723,
   path: '/',
-  protocol: 'http'
+  protocol: 'http',
 };
