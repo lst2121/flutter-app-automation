@@ -41,6 +41,50 @@ describe('Password Field Test', () => {
     await driver.saveScreenshot('./screenshots/after-first-scroll.png');
     console.log('📸 Screenshot after first scroll taken');
     
+    // First, handle Zip field - it should be visible after this scroll
+    console.log('\n📮 Testing Zip Code field...');
+    
+    // Try to find zip field using the same approach as SSN/TIN
+    let zipField = null;
+    try {
+      // Find Zip Code field by looking for the EditText after the "Zip Code *" label
+      const zipLabel = await $('//android.view.View[@content-desc="Zip Code *"]');
+      if (await zipLabel.isDisplayed()) {
+        console.log('✅ Zip Code label found');
+        
+        // Find the EditText that follows this label
+        zipField = await $('//android.view.View[@content-desc="Zip Code *"]/following-sibling::android.widget.EditText[1]');
+        if (await zipField.isDisplayed()) {
+          console.log('📝 Found Zip Code field using content-desc locator');
+          
+          // Test zip field interaction
+          await zipField.click();
+          await driver.pause(500);
+          await zipField.clearValue();
+          await driver.pause(500);
+          await zipField.setValue('12345');
+          await driver.pause(1000);
+          
+          console.log('✅ Zip field interaction completed');
+          
+          // Take screenshot after zip entry
+          await driver.saveScreenshot('./screenshots/zip-entered.png');
+          console.log('📸 Screenshot after zip entry taken');
+          
+          // Capture page source after zip entry
+          const zipPageSource = await driver.getPageSource();
+          fs.writeFileSync('./screenshots/page-source-after-zip.xml', zipPageSource);
+          console.log('📄 Page source captured after zip entry');
+        } else {
+          console.log('⚠️ Zip Code field not found after label');
+        }
+      } else {
+        console.log('⚠️ Zip Code label not found after first scroll');
+      }
+    } catch (error) {
+      console.log('⚠️ Error filling Zip Code:', error.message);
+    }
+    
     // Test SSN/TIN field using the correct logic from fill-and-submit-registration-form.e2e.js
     console.log('🆔 Looking for SSN/TIN field...');
     
