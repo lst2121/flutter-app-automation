@@ -9,7 +9,6 @@ screenshots/
 
 # App files and APKs
 Anytime Shift_1.0.45_APKPure/
-*.apk
 *.xapk
 
 # Selector files (XML dumps)
