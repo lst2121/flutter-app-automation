@@ -12,7 +12,7 @@ exports.config = {
     'appium:automationName': 'UiAutomator2',
     'appium:deviceName': 'emulator-5554',
     'appium:platformVersion': '15',
-    'appium:app': join(__dirname, 'apps', 'employee.apk'),
+    'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.debug.apk'),
     'appium:appPackage': 'com.anytimeshift.employee',
     'appium:appActivity': '.MainActivity',
     'appium:autoGrantPermissions': true,
