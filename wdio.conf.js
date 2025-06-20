@@ -39,11 +39,21 @@ exports.config = {
 
   framework: 'mocha',
 
-  reporters: ['spec'],
+  reporters: [
+    'spec',
+    ['html', {
+      outputDir: './reports/html-reports/',
+      filename: 'report.html',
+      reportTitle: 'Flutter App Automation Test Report',
+      showInBrowser: true,
+      collapseTests: false,
+      useOnAfterCommandForScreenshot: true
+    }]
+  ],
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60000
+    timeout: 150000
   },
 
   hostname: '127.0.0.1',

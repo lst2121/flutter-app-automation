@@ -239,13 +239,13 @@ describe('Password Field Test', () => {
     try {
       // Use the exact content-desc from page source (working approach)
       const stateDropdown = await $('~Select State');
-      await stateDropdown.waitForDisplayed({ timeout: 10000});
+      await stateDropdown.waitForDisplayed({ timeout: 5000 });
       console.log('✅ State dropdown found and displayed');
       
       // Click the State dropdown
       await stateDropdown.click();
       console.log('✅ State dropdown clicked');
-      await driver.pause(5000);
+      await driver.pause(2000);
       
       // Look for dropdown options using content-desc (as seen in page source)
       const stateOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
@@ -297,14 +297,16 @@ describe('Password Field Test', () => {
 
     // Handle City dropdown that may appear after State selection
     console.log('\n🏙️ Checking for City dropdown after State selection...');
-    await driver.pause(5000); // Wait for City dropdown to appear
+    await driver.pause(3000); // Wait for City dropdown to appear
     
     try {
       const cityDropdown = await $('~Select City');
       if (await cityDropdown.isDisplayed()) {
         console.log('✅ City dropdown found, selecting city...');
         await cityDropdown.click();
-        await driver.pause(10000);
+        await driver.pause(2000);
+        
+        // Use the same approach as state dropdown
         const cityOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
         console.log(`🔍 Found ${cityOptions.length} potential city options`);
         
@@ -477,21 +479,21 @@ describe('Password Field Test', () => {
     // Try content-desc first
     try {
       residenceDropdown = await $('~Select Residence Status');
-      await residenceDropdown.waitForDisplayed({ timeout: 5000});
+      await residenceDropdown.waitForDisplayed({ timeout: 3000 });
       console.log('✅ Residence Status dropdown found using content-desc');
     } catch (error) {
       console.log('⚠️ Not found with content-desc, trying hint text...');
       // Try hint text
       try {
         residenceDropdown = await $('android=new UiSelector().text("Select Residence Status")');
-        await residenceDropdown.waitForDisplayed({ timeout: 5000});
+        await residenceDropdown.waitForDisplayed({ timeout: 3000 });
         console.log('✅ Residence Status dropdown found using text');
       } catch (error2) {
         console.log('⚠️ Not found with text, trying hint...');
         // Try hint
         try {
           residenceDropdown = await $('android=new UiSelector().textContains("Residence")');
-          await residenceDropdown.waitForDisplayed({ timeout: 5000});
+          await residenceDropdown.waitForDisplayed({ timeout: 3000 });
           console.log('✅ Residence Status dropdown found using textContains');
         } catch (error3) {
           console.log('❌ Residence Status dropdown not found with any locator');
@@ -503,7 +505,7 @@ describe('Password Field Test', () => {
       // Click the Residence Status dropdown
       await residenceDropdown.click();
       console.log('✅ Residence Status dropdown clicked');
-      await driver.pause(5000);
+      await driver.pause(2000);
       
       // Look for dropdown options using content-desc (as seen in page source)
       const residenceOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');

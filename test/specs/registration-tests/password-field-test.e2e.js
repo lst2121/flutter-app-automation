@@ -7,6 +7,15 @@ describe('Password Field Test', () => {
     // Wait for app to load
     await driver.pause(3000);
     
+    // Take initial screenshot
+    await driver.saveScreenshot('./screenshots/initial-state.png');
+    console.log('📸 Initial screenshot taken');
+    
+    // Capture initial page source
+    const initialPageSource = await driver.getPageSource();
+    fs.writeFileSync('./screenshots/page-source-initial.xml', initialPageSource);
+    console.log('📄 Initial page source captured');
+    
     // Handle First Name field first
     console.log('\n👤 Testing First Name field...');
     
@@ -25,6 +34,10 @@ describe('Password Field Test', () => {
         await driver.pause(1000);
         
         console.log('✅ First Name field interaction completed');
+        
+        // Take screenshot after first name entry
+        await driver.saveScreenshot('./screenshots/first-name-entered.png');
+        console.log('📸 Screenshot after first name entry taken');
         
         // Click on "Registration" text at the top to exit editing mode
         console.log('\n📱 Clicking on Registration text to exit editing mode...');
@@ -63,6 +76,10 @@ describe('Password Field Test', () => {
         
         console.log('✅ Last Name field interaction completed');
         
+        // Take screenshot after last name entry
+        await driver.saveScreenshot('./screenshots/last-name-entered.png');
+        console.log('📸 Screenshot after last name entry taken');
+        
         // Click on "Registration" text at the top to exit editing mode
         console.log('\n📱 Clicking on Registration text to exit editing mode...');
         try {
@@ -99,6 +116,15 @@ describe('Password Field Test', () => {
         await driver.pause(1000);
         
         console.log('✅ Email field interaction completed');
+        
+        // Take screenshot after email entry
+        await driver.saveScreenshot('./screenshots/email-entered.png');
+        console.log('📸 Screenshot after email entry taken');
+        
+        // Capture page source after email entry
+        const emailPageSource = await driver.getPageSource();
+        fs.writeFileSync('./screenshots/page-source-after-email.xml', emailPageSource);
+        console.log('📄 Page source captured after email entry');
         
         // Click on "Registration" text at the top to exit editing mode
         console.log('\n📱 Clicking on Registration text to exit editing mode...');
@@ -138,6 +164,10 @@ describe('Password Field Test', () => {
         await driver.pause(1000);
         console.log('✅ Phone number entered: 5551234567');
         
+        // Take screenshot after entry
+        await driver.saveScreenshot('./screenshots/phone-number-entered.png');
+        console.log('📸 Screenshot after phone entry taken');
+        
         // Click on Registration header to exit
         const registrationText = await $('~Registration');
         await registrationText.click();
@@ -172,6 +202,15 @@ describe('Password Field Test', () => {
         
         console.log('✅ Address field interaction completed');
         
+        // Take screenshot after address entry
+        await driver.saveScreenshot('./screenshots/address-entered.png');
+        console.log('📸 Screenshot after address entry taken');
+        
+        // Capture page source after address entry
+        const addressPageSource = await driver.getPageSource();
+        fs.writeFileSync('./screenshots/page-source-after-address.xml', addressPageSource);
+        console.log('📄 Page source captured after address entry');
+        
         // Click on "Registration" text at the top to exit editing mode
         console.log('\n📱 Clicking on Registration text to exit editing mode...');
         try {
@@ -205,6 +244,10 @@ describe('Password Field Test', () => {
         } else {
           console.log('⚠️ Country field appears to be editable');
         }
+        
+        // Take screenshot of initial state
+        await driver.saveScreenshot('./screenshots/country-verified.png');
+        console.log('📸 Screenshot of country field verification taken');
       } else {
         console.log('⚠️ Country field not found or not set to "United States"');
       }
@@ -233,124 +276,108 @@ describe('Password Field Test', () => {
     await driver.releaseActions();
     await driver.pause(1500);
     
-    // UPDATED STATE DROPDOWN LOGIC - using working approach from state-dropdown-test.e2e.js
+    // Take screenshot after first scroll
+    await driver.saveScreenshot('./screenshots/after-first-scroll.png');
+    console.log('📸 Screenshot after first scroll taken');
+    
+    // First, handle State dropdown - it should be visible after this scroll
     console.log('\n🏛️ Testing State dropdown...');
     
     try {
-      // Use the exact content-desc from page source (working approach)
       const stateDropdown = await $('~Select State');
-      await stateDropdown.waitForDisplayed({ timeout: 10000});
-      console.log('✅ State dropdown found and displayed');
-      
-      // Click the State dropdown
-      await stateDropdown.click();
-      console.log('✅ State dropdown clicked');
-      await driver.pause(5000);
-      
-      // Look for dropdown options using content-desc (as seen in page source)
-      const stateOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
-      console.log(`🔍 Found ${stateOptions.length} potential state options`);
-      
-      // Filter for actual state options (those with content-desc containing state names)
-      const availableStates = [];
-      for (let i = 0; i < stateOptions.length; i++) {
-        try {
-          const contentDesc = await stateOptions[i].getAttribute('content-desc');
-          if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
-            availableStates.push({
-              element: stateOptions[i],
-              name: contentDesc
-            });
-          }
-        } catch (error) {
-          // Skip elements that don't have content-desc
-        }
-      }
-      
-      console.log(`📋 Available states: ${availableStates.map(s => s.name).join(', ')}`);
-      
-      if (availableStates.length > 0) {
-        // Select a random state (or the first one)
-        const selectedStateIndex = Math.floor(Math.random() * availableStates.length);
-        const selectedState = availableStates[selectedStateIndex];
+      if (await stateDropdown.isDisplayed()) {
+        console.log('✅ State dropdown found');
+        await stateDropdown.click();
+        await driver.pause(2000);
         
-        await selectedState.element.click();
-        console.log(`✅ Selected State: ${selectedState.name}`);
-      } else {
-        console.log('⚠️ No state options found with content-desc');
-        
-        // Fallback: try to click any clickable option
-        const clickableOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
-        if (clickableOptions.length > 0) {
-          // Skip the first one (usually the scrim/overlay)
-          const optionToClick = clickableOptions.length > 1 ? clickableOptions[1] : clickableOptions[0];
-          await optionToClick.click();
-          console.log('✅ Selected a state option (fallback method)');
-        } else {
-          console.log('❌ No clickable options found');
-        }
-      }
-      
-    } catch (error) {
-      console.log('❌ Failed to interact with State dropdown:', error.message);
-    }
-
-    // Handle City dropdown that may appear after State selection
-    console.log('\n🏙️ Checking for City dropdown after State selection...');
-    await driver.pause(5000); // Wait for City dropdown to appear
-    
-    try {
-      const cityDropdown = await $('~Select City');
-      if (await cityDropdown.isDisplayed()) {
-        console.log('✅ City dropdown found, selecting city...');
-        await cityDropdown.click();
-        await driver.pause(10000);
-        const cityOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
-        console.log(`🔍 Found ${cityOptions.length} potential city options`);
-        
-        // Filter for actual city options
-        const availableCities = [];
-        for (let i = 0; i < cityOptions.length; i++) {
+        // Select California as the fixed state option
+        const stateOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
+        let stateSelected = false;
+        for (let i = 0; i < stateOptions.length; i++) {
           try {
-            const contentDesc = await cityOptions[i].getAttribute('content-desc');
+            const contentDesc = await stateOptions[i].getAttribute('content-desc');
             if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
-              availableCities.push({
-                element: cityOptions[i],
-                name: contentDesc
-              });
+              // Try to select California first, then fall back to first option
+              if (contentDesc.includes('California') || contentDesc.includes('CA')) {
+                await stateOptions[i].click();
+                console.log(`✅ Selected State: ${contentDesc}`);
+                stateSelected = true;
+              } else if (!stateSelected) {
+                // Fall back to first available option if California not found
+                await stateOptions[i].click();
+                console.log(`✅ Selected State: ${contentDesc}`);
+                stateSelected = true;
+              }
+              
+              if (stateSelected) {
+                await driver.pause(1000);
+                
+                // Take screenshot after state selection
+                await driver.saveScreenshot('./screenshots/state-selected.png');
+                console.log('📸 Screenshot after state selection taken');
+                break;
+              }
             }
           } catch (error) {
-            // Skip elements that don't have content-desc
+            // Continue to next option
           }
         }
         
-        console.log(`📋 Available cities: ${availableCities.map(c => c.name).join(', ')}`);
+        // Handle City dropdown that may appear after State selection
+        console.log('\n🏙️ Checking for City dropdown after State selection...');
+        await driver.pause(3000); // Increased wait time for City dropdown to appear
         
-        if (availableCities.length > 0) {
-          // Select a random city (or the first one)
-          const selectedCityIndex = Math.floor(Math.random() * availableCities.length);
-          const selectedCity = availableCities[selectedCityIndex];
-          
-          await selectedCity.element.click();
-          console.log(`✅ Selected City: ${selectedCity.name}`);
-        } else {
-          console.log('⚠️ No city options found with content-desc');
-          
-          // Fallback: try to click any clickable option
-          const clickableOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
-          if (clickableOptions.length > 0) {
-            const optionToClick = clickableOptions.length > 1 ? clickableOptions[1] : clickableOptions[0];
-            await optionToClick.click();
-            console.log('✅ Selected a city option (fallback method)');
+        try {
+          const cityDropdown = await $('~Select City');
+          if (await cityDropdown.isDisplayed()) {
+            console.log('✅ City dropdown found, selecting city...');
+            await cityDropdown.click();
+            await driver.pause(2000);
+            
+            // Select Los Angeles as the fixed city option
+            const cityOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
+            let citySelected = false;
+            for (let i = 0; i < cityOptions.length; i++) {
+              try {
+                const contentDesc = await cityOptions[i].getAttribute('content-desc');
+                if (contentDesc && contentDesc.length > 0 && contentDesc !== 'Scrim') {
+                  // Try to select Los Angeles first, then fall back to first option
+                  if (contentDesc.includes('Los Angeles') || contentDesc.includes('LA')) {
+                    await cityOptions[i].click();
+                    console.log(`✅ Selected City: ${contentDesc}`);
+                    citySelected = true;
+                  } else if (!citySelected) {
+                    // Fall back to first available option if Los Angeles not found
+                    await cityOptions[i].click();
+                    console.log(`✅ Selected City: ${contentDesc}`);
+                    citySelected = true;
+                  }
+                  
+                  if (citySelected) {
+                    await driver.pause(1000);
+                    
+                    // Take screenshot after city selection
+                    await driver.saveScreenshot('./screenshots/city-selected.png');
+                    console.log('📸 Screenshot after city selection taken');
+                    break;
+                  }
+                }
+              } catch (error) {
+                // Continue to next option
+              }
+            }
           } else {
-            console.log('❌ No clickable city options found');
+            console.log('ℹ️ City dropdown not found after state selection - this is normal for some states');
           }
+        } catch (error) {
+          console.log('ℹ️ City dropdown not present - this is normal for some states');
         }
+        
       } else {
-        console.log('ℹ️ City dropdown not found after state selection - this is normal for some states');
+        console.log('⚠️ State dropdown not found');
       }
     } catch (error) {
-      console.log('ℹ️ City dropdown not present - this is normal for some states');
+      console.log('⚠️ Error with State dropdown:', error.message);
     }
     
     // First, handle Zip field - it should be visible after this scroll
@@ -378,6 +405,15 @@ describe('Password Field Test', () => {
           await driver.pause(1000);
           
           console.log('✅ Zip field interaction completed');
+          
+          // Take screenshot after zip entry
+          await driver.saveScreenshot('./screenshots/zip-entered.png');
+          console.log('📸 Screenshot after zip entry taken');
+          
+          // Capture page source after zip entry
+          const zipPageSource = await driver.getPageSource();
+          fs.writeFileSync('./screenshots/page-source-after-zip.xml', zipPageSource);
+          console.log('📄 Page source captured after zip entry');
         } else {
           console.log('⚠️ Zip Code field not found after label');
         }
@@ -402,6 +438,9 @@ describe('Password Field Test', () => {
         if (await ssnField.isDisplayed()) {
           console.log('📝 Found SS#/TIN# field using content-desc locator');
           
+          // Take screenshot before clicking
+          await driver.saveScreenshot('./screenshots/before-ssn-click.png');
+          
           // Click on SSN/TIN field
           await ssnField.click();
           await driver.pause(500);
@@ -412,6 +451,15 @@ describe('Password Field Test', () => {
           await ssnField.clearValue();
           await ssnField.setValue('123-45-6789');
           await driver.pause(1000);
+          
+          // Take screenshot after SSN/TIN entry
+          await driver.saveScreenshot('./screenshots/ssn-entered.png');
+          console.log('📸 Screenshot after SSN/TIN entry taken');
+          
+          // Capture page source after SSN/TIN entry
+          const ssnPageSource = await driver.getPageSource();
+          fs.writeFileSync('./screenshots/page-source-after-ssn.xml', ssnPageSource);
+          console.log('📄 Page source captured after SSN/TIN entry');
           
           console.log('✅ SS#/TIN# filled successfully: 123-45-6789');
           
@@ -425,12 +473,15 @@ describe('Password Field Test', () => {
           
         } else {
           console.log('⚠️ SS#/TIN# field not found after label');
+          await driver.saveScreenshot('./screenshots/ssn-field-not-found.png');
         }
       } else {
         console.log('⚠️ SS#/TIN# label not found after first scroll');
+        await driver.saveScreenshot('./screenshots/ssn-label-not-found.png');
       }
     } catch (error) {
       console.log('⚠️ Error filling SS#/TIN#:', error.message);
+      await driver.saveScreenshot('./screenshots/ssn-error.png');
     }
     
     // Now test Residence Status dropdown
@@ -470,6 +521,9 @@ describe('Password Field Test', () => {
     }]);
     await driver.releaseActions();
     await driver.pause(2000);
+
+    // Take screenshot before looking for dropdown
+    await driver.saveScreenshot('./screenshots/before-residence-search.png');
     
     // Try to find Residence Status dropdown using different locators
     let residenceDropdown = null;
@@ -477,33 +531,49 @@ describe('Password Field Test', () => {
     // Try content-desc first
     try {
       residenceDropdown = await $('~Select Residence Status');
-      await residenceDropdown.waitForDisplayed({ timeout: 5000});
+      await residenceDropdown.waitForDisplayed({ timeout: 3000 });
       console.log('✅ Residence Status dropdown found using content-desc');
     } catch (error) {
       console.log('⚠️ Not found with content-desc, trying hint text...');
       // Try hint text
       try {
         residenceDropdown = await $('android=new UiSelector().text("Select Residence Status")');
-        await residenceDropdown.waitForDisplayed({ timeout: 5000});
+        await residenceDropdown.waitForDisplayed({ timeout: 3000 });
         console.log('✅ Residence Status dropdown found using text');
       } catch (error2) {
         console.log('⚠️ Not found with text, trying hint...');
         // Try hint
         try {
           residenceDropdown = await $('android=new UiSelector().textContains("Residence")');
-          await residenceDropdown.waitForDisplayed({ timeout: 5000});
+          await residenceDropdown.waitForDisplayed({ timeout: 3000 });
           console.log('✅ Residence Status dropdown found using textContains');
         } catch (error3) {
           console.log('❌ Residence Status dropdown not found with any locator');
+          // Capture page source to see what's available
+          const pageSource = await driver.getPageSource();
+          fs.writeFileSync('./screenshots/page-source-residence-not-found.html', pageSource);
+          console.log('📄 Page source saved to: ./screenshots/page-source-residence-not-found.html');
         }
       }
     }
     
     if (residenceDropdown && await residenceDropdown.isDisplayed()) {
+      // Take screenshot before clicking
+      await driver.saveScreenshot('./screenshots/before-residence-click.png');
+      
       // Click the Residence Status dropdown
       await residenceDropdown.click();
       console.log('✅ Residence Status dropdown clicked');
-      await driver.pause(5000);
+      await driver.pause(2000);
+      
+      // Capture page source after Residence Status dropdown click
+      console.log('📄 Capturing page source after Residence Status dropdown click...');
+      const residencePageSource = await driver.getPageSource();
+      fs.writeFileSync('./screenshots/page-source-residence-dropdown.html', residencePageSource);
+      console.log('📄 Residence Status dropdown page source saved to: ./screenshots/page-source-residence-dropdown.html');
+      
+      // Take screenshot after clicking
+      await driver.saveScreenshot('./screenshots/residence-dropdown-opened.png');
       
       // Look for dropdown options using content-desc (as seen in page source)
       const residenceOptions = await $$('android=new UiSelector().className("android.view.View").clickable(true)');
@@ -534,6 +604,9 @@ describe('Password Field Test', () => {
         
         await selectedResidence.element.click();
         console.log(`✅ Selected Residence Status: ${selectedResidence.name}`);
+
+        // Take screenshot after selection
+        await driver.saveScreenshot('./screenshots/residence-option-selected.png');
       } else {
         console.log('⚠️ No residence status options found with content-desc');
         
@@ -611,6 +684,15 @@ describe('Password Field Test', () => {
       }
     }
     
+    // Take screenshot after scroll attempt
+    await driver.saveScreenshot('./screenshots/after-scroll.png');
+    console.log('📸 Screenshot after scroll taken');
+    
+    // Capture page source after scroll
+    const pageSourceAfterScroll = await driver.getPageSource();
+    fs.writeFileSync('./screenshots/page-source-after-scroll.xml', pageSourceAfterScroll);
+    console.log('📄 Page source after scroll captured');
+    
     // Try finding password field again after scroll
     if (!passwordField) {
       console.log('🔄 Trying password field selectors again after scroll...');
@@ -629,6 +711,12 @@ describe('Password Field Test', () => {
     
     if (!passwordField) {
       console.log('❌ Password field not found after scrolling');
+      await driver.saveScreenshot('./screenshots/password-not-found.png');
+      
+      // Capture final page source for debugging
+      const finalPageSource = await driver.getPageSource();
+      fs.writeFileSync('./screenshots/page-source-final.xml', finalPageSource);
+      console.log('📄 Final page source captured with all fields');
     } else {
       console.log('✅ Password field found and ready for interaction');
       
@@ -786,6 +874,7 @@ describe('Password Field Test', () => {
       } else {
         console.log('❌ Register button not found');
       }
+    //   await driver.saveScreenshot('./screenshots/password-field-completed.png');
     }
     
     console.log('🔐 Password Field Test completed');

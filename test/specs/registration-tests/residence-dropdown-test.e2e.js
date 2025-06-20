@@ -1,5 +1,5 @@
 const { expect } = require('@wdio/globals');
-const AppFlow = require('../pageobjects/AppFlow');
+const AppFlow = require('../../pageobjects/AppFlow');
 const fs = require('fs');
 
 describe('Residence Status Dropdown Test', () => {

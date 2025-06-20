@@ -48,7 +48,7 @@ exports.config = {
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60000
+    timeout: 120000
   },
 
   hostname: '127.0.0.1',

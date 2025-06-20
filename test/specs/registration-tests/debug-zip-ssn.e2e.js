@@ -1,6 +1,6 @@
 const { expect } = require('@wdio/globals');
-const AppFlow = require('../pageobjects/AppFlow');
-const RegistrationPage = require('../pageobjects/RegistrationPage');
+const AppFlow = require('../../pageobjects/AppFlow');
+const RegistrationPage = require('../../pageobjects/RegistrationPage');
 const fs = require('fs');
 
 // Helper function to close sidebar
