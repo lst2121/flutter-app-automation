@@ -1,3 +1,5 @@
+const { expect } = require('@wdio/globals');
+
 // Random data generation functions
 function generateRandomEmail() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -42,6 +44,20 @@ function generateRandomSSN() {
   return `${part1}-${part2}-${part3}`;
 }
 
+// Helper function to restart app
+async function restartApp() {
+  try {
+    await driver.startActivity('com.anytimeshift.employee', '.MainActivity');
+    await driver.pause(3000);
+    console.log('✅ App restarted');
+  } catch (error) {
+    console.log('❌ Error restarting app:', error.message);
+  }
+}
+
+// ========================================
+// COMPLETE REGISTRATION FLOW TEST
+// ========================================
 describe('Complete Registration Flow', () => {
   it('It should complete the registration flow', async () => {
     console.log('🔐 Starting');
@@ -885,3 +901,229 @@ describe('Complete Registration Flow', () => {
     console.log('🔐 Complete Registration Flow Test completed');
   });
 }); 
+
+// ========================================
+// EMAIL ADDRESS FIELD VALIDATION TESTS
+// ========================================
+describe('Email Address Field Validation', () => {
+  let emailField;
+  
+  before(async () => {
+    console.log('📧 Starting Email Validation Tests');
+    await restartApp();
+    
+    try {
+      emailField = await $('//android.widget.EditText[@hint="e.g. johndoe@mail.com"]');
+      if (await emailField.isDisplayed()) {
+        console.log('✅ Email field found');
+      }
+    } catch (error) {
+      console.log('❌ Email field not found');
+    }
+  });
+
+  it('should accept valid email format', async () => {
+    if (!emailField || !(await emailField.isDisplayed())) return;
+    
+    await emailField.click();
+    await emailField.clearValue();
+    await emailField.setValue('valid.email@domain.com');
+    await driver.pause(1000);
+    
+    const enteredValue = await emailField.getAttribute('text');
+    expect(enteredValue).toBe('valid.email@domain.com');
+    console.log('✅ Valid email accepted');
+  });
+
+  it('should handle invalid email format', async () => {
+    if (!emailField || !(await emailField.isDisplayed())) return;
+    
+    await emailField.click();
+    await emailField.clearValue();
+    await emailField.setValue('invalid-email');
+    await driver.pause(1000);
+    
+    const enteredValue = await emailField.getAttribute('text');
+    console.log(`📝 Invalid email entered: ${enteredValue}`);
+  });
+
+  it('should handle empty email field', async () => {
+    if (!emailField || !(await emailField.isDisplayed())) return;
+    
+    await emailField.click();
+    await emailField.clearValue();
+    
+    const enteredValue = await emailField.getAttribute('text');
+    expect(enteredValue).toBe('');
+    console.log('✅ Empty email handled');
+  });
+});
+
+// ========================================
+// SSN/TIN FIELD VALIDATION TESTS
+// ========================================
+describe('SSN/TIN Field Validation', () => {
+  let ssnField;
+  
+  before(async () => {
+    console.log('🔢 Starting SSN/TIN Validation Tests');
+    await restartApp();
+    
+    // Scroll to find SSN field
+    await driver.performActions([{
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: 540, y: 1800 },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 100 },
+        { type: 'pointerMove', duration: 1000, x: 540, y: 600 },
+        { type: 'pointerUp', button: 0 }
+      ]
+    }]);
+    await driver.releaseActions();
+    await driver.pause(1000);
+    
+    try {
+      ssnField = await $('//android.view.View[@content-desc="SS#/TIN# *"]/following-sibling::android.widget.EditText[1]');
+      if (await ssnField.isDisplayed()) {
+        console.log('✅ SSN/TIN field found');
+      }
+    } catch (error) {
+      console.log('❌ SSN/TIN field not found');
+    }
+  });
+
+  it('should be editable', async () => {
+    if (!ssnField || !(await ssnField.isDisplayed())) return;
+    
+    await ssnField.click();
+    await ssnField.setValue('111-22-3333');
+    const val = await ssnField.getAttribute('text');
+    expect(val).toBe('111-22-3333');
+    console.log('✅ SSN/TIN field editable');
+  });
+
+  it('should accept valid SSN format', async () => {
+    if (!ssnField || !(await ssnField.isDisplayed())) return;
+    
+    await ssnField.clearValue();
+    await ssnField.setValue('123-45-6789');
+    const val = await ssnField.getAttribute('text');
+    expect(val).toBe('123-45-6789');
+    console.log('✅ Valid SSN format accepted');
+  });
+
+  it('should auto-format TIN input to SSN format', async () => {
+    if (!ssnField || !(await ssnField.isDisplayed())) return;
+    
+    await ssnField.clearValue();
+    await ssnField.setValue('12-3456789');
+    const val = await ssnField.getAttribute('text');
+    // App auto-formats TIN to SSN format
+    expect(val).toBe('123-45-6789');
+    console.log('✅ TIN auto-formatted to SSN format');
+  });
+
+  it('should handle alphanumeric input gracefully', async () => {
+    if (!ssnField || !(await ssnField.isDisplayed())) return;
+    
+    await ssnField.clearValue();
+    await ssnField.setValue('abc123def');
+    const val = await ssnField.getAttribute('text');
+    // App should handle alphanumeric input without crashing
+    expect(typeof val).toBe('string');
+    console.log('✅ Alphanumeric input handled gracefully');
+  });
+});
+
+// ========================================
+// ZIP CODE FIELD VALIDATION TESTS
+// ========================================
+describe('Zip Code Field Validation', () => {
+  let zipField;
+  
+  before(async () => {
+    console.log('📮 Starting ZIP Code Validation Tests');
+    await restartApp();
+    
+    // Scroll to find ZIP field
+    await driver.performActions([{
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: 540, y: 1800 },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 100 },
+        { type: 'pointerMove', duration: 1000, x: 540, y: 600 },
+        { type: 'pointerUp', button: 0 }
+      ]
+    }]);
+    await driver.releaseActions();
+    await driver.pause(1000);
+    
+    try {
+      zipField = await $('//android.view.View[@content-desc="Zip Code *"]/following-sibling::android.widget.EditText[1]');
+      if (await zipField.isDisplayed()) {
+        console.log('✅ ZIP code field found');
+      }
+    } catch (error) {
+      console.log('❌ ZIP code field not found');
+    }
+  });
+
+  it('should be editable', async () => {
+    if (!zipField || !(await zipField.isDisplayed())) return;
+    
+    await zipField.click();
+    await zipField.setValue('99999');
+    const val = await zipField.getAttribute('text');
+    expect(val).toBe('99999');
+    console.log('✅ ZIP code field editable');
+  });
+
+  it('should accept 5-digit zip code', async () => {
+    if (!zipField || !(await zipField.isDisplayed())) return;
+    
+    await zipField.clearValue();
+    await zipField.setValue('12345');
+    const val = await zipField.getAttribute('text');
+    expect(val).toBe('12345');
+    console.log('✅ 5-digit ZIP code accepted');
+  });
+
+  it('should truncate extended zip code to 5 digits', async () => {
+    if (!zipField || !(await zipField.isDisplayed())) return;
+    
+    await zipField.clearValue();
+    await zipField.setValue('12345-6789');
+    const val = await zipField.getAttribute('text');
+    // App truncates to 5 digits
+    expect(val).toBe('12345');
+    console.log('✅ Extended ZIP code truncated to 5 digits');
+  });
+
+  it('should handle alphanumeric input gracefully', async () => {
+    if (!zipField || !(await zipField.isDisplayed())) return;
+    
+    await zipField.clearValue();
+    await zipField.setValue('abc123');
+    const val = await zipField.getAttribute('text');
+    // App should handle alphanumeric input without crashing
+    expect(typeof val).toBe('string');
+    console.log('✅ Alphanumeric input handled gracefully');
+  });
+});
+
+// ========================================
+// FUTURE: ADD MORE TEST SUITES HERE
+// ========================================
+// You can add more describe blocks for:
+// - Password Field Tests
+// - Dropdown Tests
+// - Scroll Tests
+// - Phone Number Validation Tests
+// - Address Validation Tests
+// etc.

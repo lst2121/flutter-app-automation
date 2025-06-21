@@ -4,19 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "wdio run ./wdio.conf.js",
-    "wdio": "wdio run ./wdio.conf.js",
-    "test:email-validation": "wdio run ./wdio.conf.js --spec ./test/specs/email-validation-test.e2e.js",
-    "test:zip-validation": "wdio run ./wdio.conf.js --spec ./test/specs/zip-code-validation-test.e2e.js",
-    "test:ssn-validation": "wdio run ./wdio.conf.js --spec ./test/specs/ssn-tin-validation-test.e2e.js",
-    "test:field-validation-all": "wdio run ./wdio.conf.js --spec ./test/specs/email-validation-test.e2e.js,./test/specs/zip-code-validation-test.e2e.js,./test/specs/ssn-tin-validation-test.e2e.js",
-    "test:skip-registration": "wdio run ./wdio.conf.js --spec ./test/specs/**/*.e2e.js --exclude ./test/specs/registration-tests/**/*.e2e.js",
-    "test:complete-registration": "wdio run ./wdio.conf.js --spec ./test/specs/complete-regitration-flow.e2e.js",
-    "test:all-current": "wdio run ./wdio.conf.js --spec ./test/specs/complete-regitration-flow.e2e.js,./test/specs/email-validation-test.e2e.js,./test/specs/zip-code-validation-test.e2e.js,./test/specs/ssn-tin-validation-test.e2e.js",
-    "test:main-flow": "wdio run ./wdio.conf.js --spec ./test/specs/complete-regitration-flow.e2e.js",
-    "test:validation-suite": "wdio run ./wdio.conf.js --spec ./test/specs/email-validation-test.e2e.js,./test/specs/zip-code-validation-test.e2e.js,./test/specs/ssn-tin-validation-test.e2e.js",
-    "clean:apps": "rm -rf apps/*.apk",
-    "clean:screenshots": "rm -rf screenshots/*.png",
-    "clean:all": "npm run clean:apps && npm run clean:screenshots",
+    "test:all": "wdio run ./wdio.conf.js --spec ./test/specs/**/*.e2e.js",
+    "test:registration": "wdio run ./wdio.conf.js --spec ./test/specs/registration-form-tests.e2e.js",
+    "allure-report": "npx allure generate allure-results --clean -o allure-report && npx allure open allure-report",
     "generate:allure-report": "npx allure generate allure-results --clean -o allure-report",
     "open:allure-report": "npx allure open allure-report"
   },
@@ -25,8 +15,7 @@
     "automation",
     "testing",
     "appium",
-    "webdriverio",
-    "hrms"
+    "webdriverio"
   ],
   "author": "",
   "license": "ISC",
