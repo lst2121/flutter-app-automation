@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 describe('Zip Code Field Validation', () => {
   let zipField;
   before(async () => {

@@ -1,7 +1,5 @@
-const fs = require('fs');
-
 describe('Password Field Test', () => {
-  it('should find password field by scrolling and capture source', async () => {
+  it('should find password field by scrolling', async () => {
     console.log('🔐 Starting Password Field Test');
     
     // Wait for app to load
