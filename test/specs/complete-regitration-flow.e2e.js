@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 // Random data generation functions
 function generateRandomEmail() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -846,25 +844,18 @@ describe('Complete Registration Flow', () => {
         await driver.pause(2000);
         console.log('✅ Register button clicked');
         
-        // Save page source after clicking register button
-        console.log('💾 Saving page source after registration...');
-        const pageSource = await driver.getPageSource();
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `page-source-after-registration-${timestamp}.xml`;
-        
-        try {
-          fs.writeFileSync(filename, pageSource);
-          console.log(`✅ Page source saved to: ${filename}`);
-        } catch (error) {
-          console.log('❌ Error saving page source:', error.message);
-        }
-        
-        // Look for authentication spinner in page source
+        // Look for authentication verification flow
         console.log('🔄 Looking for authentication verification flow...');
-        if (pageSource.includes('Verification') || pageSource.includes('verification code') || pageSource.includes('verification') || pageSource.includes('We have sent a verification code')) {
-          console.log('✅ Authentication verification flow detected in page source');
+        const pageSource = await driver.getPageSource();
+        
+        if (pageSource.includes('Verification') || pageSource.includes('verification code') || pageSource.includes('verification') || pageSource.includes('We have sent a verification code') || pageSource.includes('Authenticating')) {
+          console.log('✅ Authentication flow detected in page source');
           
-          // Check for specific verification elements
+          // Check for specific authentication elements
+          if (pageSource.includes('Authenticating')) {
+            console.log('✅ Authentication spinner/loading detected');
+          }
+          
           if (pageSource.includes('Verification Code')) {
             console.log('✅ Verification code input field found');
           }
@@ -877,26 +868,15 @@ describe('Complete Registration Flow', () => {
             console.log('✅ Verify button found');
           }
           
-          // Wait for verification process to complete (or for user to handle verification)
-          console.log('⏳ Authentication verification flow detected - waiting for verification process...');
+          // Wait for authentication process to complete
+          console.log('⏳ Authentication flow detected - waiting for process to complete...');
           await driver.pause(5000);
           
-          // Save final page source after verification flow
-          console.log('💾 Saving final page source after verification flow...');
-          const finalPageSource = await driver.getPageSource();
-          const finalFilename = `page-source-after-verification-${timestamp}.xml`;
-          
-          try {
-            fs.writeFileSync(finalFilename, finalPageSource);
-            console.log(`✅ Final page source saved to: ${finalFilename}`);
-          } catch (error) {
-            console.log('❌ Error saving final page source:', error.message);
-          }
+          console.log('✅ Authentication flow completed');
           
         } else {
-          console.log('⚠️ No authentication verification flow found in page source');
+          console.log('⚠️ No authentication flow found in page source');
         }
-        
       } else {
         console.log('❌ Register button not found');
       }

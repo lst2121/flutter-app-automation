@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 describe('SSN/TIN Field Validation', () => {
   let ssnField;
   before(async () => {

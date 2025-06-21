@@ -6,14 +6,15 @@ A comprehensive automated testing framework for Flutter applications using Webdr
 
 - **Cross-platform testing** for Android Flutter applications
 - **Page Object Model (POM)** design pattern for maintainable test code
-- **Visual testing** capabilities with screenshot comparison
 - **Smart scrolling** utilities for dynamic content
+- **Random data generation** for unique test runs
+- **Authentication flow detection** with verification screens
 - **Comprehensive test coverage** including:
-  - Language selection
-  - Login/Registration flows
-  - Form validation
+  - Complete registration flow with random data
+  - Form validation (email, SSN/TIN, zip code, password)
   - UI element interactions
   - Scroll behavior testing
+  - Language selection
 
 ## 📋 Prerequisites
 
@@ -77,28 +78,12 @@ export PATH=$PATH:$ANDROID_HOME/tools/bin
    appium driver list
    ```
 
-## 🔗 Connecting to Local Codebase
-
-**For development with your own Flutter app, see [LOCAL_DEVELOPMENT_SETUP.md](./LOCAL_DEVELOPMENT_SETUP.md)**
-
-Quick setup for local development:
-
-```bash
-# Run the setup script
-node setup-local-dev.js
-
-# Follow the prompts to configure your app
-# Then build and test your local app
-npm run dev:test
-```
-
 ## 📱 App Setup
 
 ### Using the Provided APK
 
 The project includes the Anytime Shift employee app APK in the `apps/` directory:
-- `com.anytimeshift.employee.apk` - Main application file
-- `Anytime Shift_1.0.45_APKPure.xapk` - Alternative package format
+- `com.anytimeshift.employee.debug.apk` - Main application file
 
 ### Using Your Own APK
 
@@ -124,7 +109,7 @@ capabilities: [{
   'appium:automationName': 'UiAutomator2',
   'appium:deviceName': 'emulator-5554',  // Update with your device
   'appium:platformVersion': '15',        // Update with your Android version
-  'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.apk'),
+  'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.debug.apk'),
   'appium:appPackage': 'com.anytimeshift.employee',
   'appium:appActivity': '.MainActivity',
   'appium:autoGrantPermissions': true,
@@ -164,43 +149,40 @@ Update the device configuration in `wdio.conf.js`:
 ### Run All Tests
 
 ```bash
+npm test
+# or
 npm run wdio
 ```
 
 ### Run Specific Test Files
 
 ```bash
-# Run login tests
-npx wdio run ./wdio.conf.js --spec ./test/specs/login-page.e2e.js
+# Run complete registration flow (main test)
+npm run test:complete-registration
 
-# Run registration tests
-npx wdio run ./wdio.conf.js --spec ./test/specs/registration-page.e2e.js
+# Run field validation tests
+npm run test:field-validation-all
 
-# Run language selection tests
-npx wdio run ./wdio.conf.js --spec ./test/specs/language-selection.e2e.js
+# Run individual validation tests
+npm run test:email-validation
+npm run test:zip-validation
+npm run test:ssn-validation
 
-# Run local development tests
-npm run test:local
+# Run tests excluding registration-tests folder
+npm run test:skip-registration
 ```
 
-### Run Tests with Specific Capabilities
+### Run Tests with WebdriverIO CLI
 
 ```bash
+# Run specific test file
+npx wdio run ./wdio.conf.js --spec ./test/specs/complete-regitration-flow.e2e.js
+
+# Run multiple test files
+npx wdio run ./wdio.conf.js --spec ./test/specs/email-validation-test.e2e.js,./test/specs/zip-code-validation-test.e2e.js
+
 # Run with different device
 npx wdio run ./wdio.conf.js --capabilities.deviceName="your-device-id"
-```
-
-### Development Workflow
-
-```bash
-# Build and test your local app
-npm run dev:test
-
-# Run in debug mode
-npm run test:debug
-
-# Watch mode for development
-npm run dev:watch
 ```
 
 ## 📁 Project Structure
@@ -208,8 +190,7 @@ npm run dev:watch
 ```
 flutter-app-automation/
 ├── apps/                          # Application APK files
-│   ├── com.anytimeshift.employee.apk
-│   └── Anytime Shift_1.0.45_APKPure.xapk
+│   └── com.anytimeshift.employee.debug.apk
 ├── test/
 │   ├── pageobjects/              # Page Object Model classes
 │   │   ├── BasePage.js           # Base page with common utilities
@@ -218,49 +199,69 @@ flutter-app-automation/
 │   │   ├── LanguageSelectionPage.js
 │   │   └── AppFlow.js            # End-to-end app flow
 │   ├── specs/                    # Test specifications
-│   │   ├── login-page.e2e.js
-│   │   ├── registration-page.e2e.js
-│   │   ├── language-selection.e2e.js
-│   │   ├── local-dev.e2e.js      # Local development tests
+│   │   ├── complete-regitration-flow.e2e.js  # Main registration test
+│   │   ├── email-validation-test.e2e.js      # Email field validation
+│   │   ├── zip-code-validation-test.e2e.js   # ZIP code validation
+│   │   ├── ssn-tin-validation-test.e2e.js    # SSN/TIN validation
+│   │   ├── password-field-test.e2e.js        # Password field testing
+│   │   ├── registration-tests/               # Additional registration tests (gitignored)
 │   │   └── ...                   # Other test files
 │   └── utils/                    # Utility functions
-│       └── scrollUtil.js         # Smart scrolling utilities
-├── screenshots/                  # Test screenshots and visual comparisons
+│       ├── scrollUtil.js         # Smart scrolling utilities
+│       └── TestUtils.js          # Test utilities
+├── allure-results/               # Allure test results
+├── allure-report/                # Allure test reports
+├── screenshots/                  # Test screenshots (gitignored)
 ├── selectors_file/              # Element selectors and locators
 ├── wdio.conf.js                 # WebdriverIO configuration
-├── package.json                 # Project dependencies
-├── setup-local-dev.js           # Local development setup script
-├── LOCAL_DEVELOPMENT_SETUP.md   # Local development guide
+├── wdio.debug.conf.js           # Debug configuration
+├── wdio.employee.conf.js        # Employee-specific configuration
+├── package.json                 # Project dependencies and scripts
+├── .gitignore                   # Git ignore rules
 └── README.md                    # This file
 ```
 
 ## 🧪 Test Categories
 
-### 1. Language Selection Tests
-- `language-selection.e2e.js` - Tests language selection flow
+### 1. Main Registration Flow
+- `complete-regitration-flow.e2e.js` - Complete registration with random data and authentication detection
 
-### 2. Authentication Tests
-- `login-page.e2e.js` - Login page functionality
-- `registration-page.e2e.js` - Registration form testing
-- `registration-new.e2e.js` - Enhanced registration tests
+### 2. Field Validation Tests
+- `email-validation-test.e2e.js` - Email field validation and error handling
+- `zip-code-validation-test.e2e.js` - ZIP code field validation
+- `ssn-tin-validation-test.e2e.js` - SSN/TIN field validation
+- `password-field-test.e2e.js` - Password and confirm password field testing
 
-### 3. Form Validation Tests
-- `complete-registration-form.e2e.js` - Complete form validation
-- `debug-zip-ssn.e2e.js` - ZIP and SSN field validation
+### 3. Additional Tests (in registration-tests folder)
+- Various registration flow tests (excluded from git tracking)
+- Scroll behavior testing
+- Dropdown functionality tests
+- Page Object Model implementations
 
-### 4. UI Interaction Tests
-- `scroll-test.e2e.js` - Scroll behavior testing
-- `scroll-test-clean.e2e.js` - Clean scroll tests
-- `state-dropdown-test.e2e.js` - Dropdown functionality
-- `residence-dropdown-test.e2e.js` - Residence dropdown tests
+## 🔍 Key Features
 
-### 5. Page Object Model Tests
-- `pom-simple-test.e2e.js` - Basic POM implementation
-- `pom-enhanced-test.e2e.js` - Enhanced POM tests
-- `pom-registration-test.e2e.js` - POM registration flow
+### Random Data Generation
+The main registration test generates unique data for each run:
+- Random email addresses
+- Random names (first and last)
+- Random phone numbers
+- Random addresses
+- Random ZIP codes
+- Random SSN/TIN numbers
 
-### 6. Local Development Tests
-- `local-dev.e2e.js` - Local development and debugging tests
+### Authentication Flow Detection
+The test automatically detects:
+- "Authenticating" spinner during registration
+- Verification screens with phone number input
+- Verification code input fields
+- Success/failure states
+
+### Smart Element Detection
+Tests use multiple selector strategies:
+- Accessibility IDs (`~element`)
+- XPath selectors
+- Content descriptions
+- Hint text matching
 
 ## 🔍 Debugging
 
@@ -268,7 +269,7 @@ flutter-app-automation/
 
 Update `wdio.conf.js`:
 ```javascript
-logLevel: 'debug',  // Change from 'info' to 'debug'
+logLevel: 'debug',  // Change from 'warn' to 'debug'
 ```
 
 ### Take Screenshots
@@ -291,10 +292,10 @@ appium --log appium.log
 adb devices
 
 # View app logs
-adb logcat | grep "your-app-package"
+adb logcat | grep "com.anytimeshift.employee"
 
 # Install APK
-adb install apps/com.anytimeshift.employee.apk
+adb install apps/com.anytimeshift.employee.debug.apk
 
 # Uninstall app
 adb uninstall com.anytimeshift.employee
@@ -317,35 +318,57 @@ adb uninstall com.anytimeshift.employee
 3. **APK Installation Failed**
    - Check APK file integrity
    - Verify device has enough storage
-   - Uninstall existing app first
+   - Uninstall existing app first: `adb uninstall com.anytimeshift.employee`
 
 4. **Emulator Issues**
    - Restart Android Studio
    - Create new AVD with different API level
    - Check virtualization settings in BIOS
 
+5. **Test Fails with "Already Taken" Error**
+   - This is normal for SSN/TIN fields
+   - The test uses random data to avoid this issue
+   - If it still occurs, the random data generation will handle it
+
 ### Getting Help
 
 1. Check the [Appium documentation](http://appium.io/docs/en/about-appium/intro/)
 2. Review [WebdriverIO documentation](https://webdriver.io/docs/gettingstarted)
-3. Check test logs in `screenshots/` directory
+3. Check test logs in console output
 4. Use Appium Inspector for element inspection
 
 ## 📊 Test Reports
 
-Test results are displayed in the console with detailed logging. For enhanced reporting, consider adding:
+### Console Output
+Tests provide detailed console logging with emojis for easy reading:
+- ✅ Success messages
+- ❌ Error messages
+- 🔄 Progress indicators
+- 📝 Data logging
+
+### Allure Reports
+
+Generate and view Allure reports:
 
 ```bash
-npm install @wdio/allure-reporter --save-dev
+# Generate report
+npm run generate:allure-report
+
+# Open report in browser
+npm run open:allure-report
 ```
 
-Update `wdio.conf.js`:
-```javascript
-reporters: ['spec', ['allure', {
-  outputDir: 'allure-results',
-  disableWebdriverStepsReporting: true,
-  disableWebdriverScreenshotsReporting: false,
-}]],
+## 🧹 Cleanup
+
+Clean up test artifacts:
+
+```bash
+# Clean all test artifacts
+npm run clean:all
+
+# Clean specific artifacts
+npm run clean:apps
+npm run clean:screenshots
 ```
 
 ## 🤝 Contributing
@@ -364,6 +387,6 @@ This project is licensed under the ISC License.
 
 For questions or issues:
 1. Check the troubleshooting section
-2. Review test logs and screenshots
+2. Review test logs and console output
 3. Create an issue with detailed information
 4. Include device/emulator specifications and error logs 

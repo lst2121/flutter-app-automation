@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 describe('Email Address Field Validation Test', () => {
   let emailField;
   
@@ -168,7 +166,6 @@ describe('Email Address Field Validation Test', () => {
       console.log('❌ Email field not available for testing');
       return;
     }
-    
     try {
       // Ensure email field is empty
       await emailField.click();
