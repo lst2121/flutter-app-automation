@@ -25,8 +25,9 @@ allure-report/
 *.html
 *.json
 
-# Registration test files
+# Test files and page objects
 test/specs/experimental-tests/
+test/pageobjects/
 clean-git.sh
 
 # Documentation files
