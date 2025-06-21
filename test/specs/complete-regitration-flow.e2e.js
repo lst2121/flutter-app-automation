@@ -1,8 +1,64 @@
 const fs = require('fs');
 
+// Random data generation functions
+function generateRandomEmail() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const username = Array.from({length: 8}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'test.com'];
+  const domain = domains[Math.floor(Math.random() * domains.length)];
+  return `${username}@${domain}`;
+}
+
+function generateRandomName() {
+  const firstNames = ['John', 'Jane', 'Mike', 'Sarah', 'David', 'Lisa', 'Robert', 'Emily', 'James', 'Maria'];
+  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+  return {
+    firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+    lastName: lastNames[Math.floor(Math.random() * lastNames.length)]
+  };
+}
+
+function generateRandomPhone() {
+  const areaCode = Math.floor(Math.random() * 900) + 100; // 100-999
+  const prefix = Math.floor(Math.random() * 900) + 100; // 100-999
+  const lineNumber = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+  return `${areaCode}${prefix}${lineNumber}`;
+}
+
+function generateRandomAddress() {
+  const numbers = Math.floor(Math.random() * 9999) + 1;
+  const streets = ['Main St', 'Oak Ave', 'Pine Rd', 'Elm St', 'Maple Dr', 'Cedar Ln', 'Birch Way', 'Willow Ct'];
+  const street = streets[Math.floor(Math.random() * streets.length)];
+  const apt = Math.floor(Math.random() * 999) + 1;
+  return `${numbers} ${street}, Apt ${apt}`;
+}
+
+function generateRandomZip() {
+  return Math.floor(Math.random() * 90000) + 10000; // 10000-99999
+}
+
+function generateRandomSSN() {
+  const part1 = Math.floor(Math.random() * 900) + 100; // 100-999
+  const part2 = Math.floor(Math.random() * 90) + 10; // 10-99
+  const part3 = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+  return `${part1}-${part2}-${part3}`;
+}
+
 describe('Complete Registration Flow', () => {
   it('It should complete the registration flow', async () => {
     console.log('🔐 Starting');
+    
+    // Generate random data for this test run
+    const randomData = {
+      email: generateRandomEmail(),
+      names: generateRandomName(),
+      phone: generateRandomPhone(),
+      address: generateRandomAddress(),
+      zip: generateRandomZip(),
+      ssn: generateRandomSSN()
+    };
+    
+    console.log('📊 Generated random data:', randomData);
     
     // Wait for app to load
     await driver.pause(3000);
@@ -21,7 +77,7 @@ describe('Complete Registration Flow', () => {
         await driver.pause(500);
         await firstNameField.clearValue();
         await driver.pause(500);
-        await firstNameField.setValue('John');
+        await firstNameField.setValue(randomData.names.firstName);
         await driver.pause(1000);
         
         console.log('✅ First Name field interaction completed');
@@ -58,7 +114,7 @@ describe('Complete Registration Flow', () => {
         await driver.pause(500);
         await lastNameField.clearValue();
         await driver.pause(500);
-        await lastNameField.setValue('Doe');
+        await lastNameField.setValue(randomData.names.lastName);
         await driver.pause(1000);
         
         console.log('✅ Last Name field interaction completed');
@@ -95,7 +151,7 @@ describe('Complete Registration Flow', () => {
         await driver.pause(500);
         await emailField.clearValue();
         await driver.pause(500);
-        await emailField.setValue('test@example.com');
+        await emailField.setValue(randomData.email);
         await driver.pause(1000);
         
         console.log('✅ Email field interaction completed');
@@ -134,9 +190,9 @@ describe('Complete Registration Flow', () => {
         
         // Clear and enter phone number
         await phoneField.clearValue();
-        await phoneField.setValue('5551234567');
+        await phoneField.setValue(randomData.phone);
         await driver.pause(1000);
-        console.log('✅ Phone number entered: 5551234567');
+        console.log('✅ Phone number entered: ' + randomData.phone);
         
         // Click on Registration header to exit
         const registrationText = await $('~Registration');
@@ -167,7 +223,7 @@ describe('Complete Registration Flow', () => {
         await driver.pause(500);
         await addressField.clearValue();
         await driver.pause(500);
-        await addressField.setValue('123 Main Street, Apt 4B');
+        await addressField.setValue(randomData.address);
         await driver.pause(1000);
         
         console.log('✅ Address field interaction completed');
@@ -374,7 +430,7 @@ describe('Complete Registration Flow', () => {
           await driver.pause(500);
           await zipField.clearValue();
           await driver.pause(500);
-          await zipField.setValue('12345');
+          await zipField.setValue(randomData.zip.toString());
           await driver.pause(1000);
           
           console.log('✅ Zip field interaction completed');
@@ -410,10 +466,10 @@ describe('Complete Registration Flow', () => {
           await ssnField.clearValue();
           await driver.pause(500);
           await ssnField.clearValue();
-          await ssnField.setValue('987-65-4321');
+          await ssnField.setValue(randomData.ssn);
           await driver.pause(1000);
           
-          console.log('✅ SS#/TIN# filled successfully: 987-65-4321');
+          console.log('✅ SS#/TIN# filled successfully: ' + randomData.ssn);
           
           // Simple validation - just check if we can still find the SS#/TIN# label
           const stillOnForm = await $('//android.view.View[@content-desc="SS#/TIN# *"]').isDisplayed().catch(() => false);
@@ -804,18 +860,31 @@ describe('Complete Registration Flow', () => {
         }
         
         // Look for authentication spinner in page source
-        console.log('🔄 Looking for authentication spinner...');
-        if (pageSource.includes('spinner') || pageSource.includes('loading') || pageSource.includes('progress')) {
-          console.log('✅ Authentication spinner/loading indicator found in page source');
+        console.log('🔄 Looking for authentication verification flow...');
+        if (pageSource.includes('Verification') || pageSource.includes('verification code') || pageSource.includes('verification') || pageSource.includes('We have sent a verification code')) {
+          console.log('✅ Authentication verification flow detected in page source');
           
-          // Wait for spinner to disappear (indicating completion)
-          console.log('⏳ Waiting for authentication process to complete...');
+          // Check for specific verification elements
+          if (pageSource.includes('Verification Code')) {
+            console.log('✅ Verification code input field found');
+          }
+          
+          if (pageSource.includes('Resend Code')) {
+            console.log('✅ Resend code button found');
+          }
+          
+          if (pageSource.includes('Verify')) {
+            console.log('✅ Verify button found');
+          }
+          
+          // Wait for verification process to complete (or for user to handle verification)
+          console.log('⏳ Authentication verification flow detected - waiting for verification process...');
           await driver.pause(5000);
           
-          // Save final page source after authentication
-          console.log('💾 Saving final page source after authentication...');
+          // Save final page source after verification flow
+          console.log('💾 Saving final page source after verification flow...');
           const finalPageSource = await driver.getPageSource();
-          const finalFilename = `page-source-after-auth-${timestamp}.xml`;
+          const finalFilename = `page-source-after-verification-${timestamp}.xml`;
           
           try {
             fs.writeFileSync(finalFilename, finalPageSource);
@@ -825,7 +894,7 @@ describe('Complete Registration Flow', () => {
           }
           
         } else {
-          console.log('⚠️ No authentication spinner found in page source');
+          console.log('⚠️ No authentication verification flow found in page source');
         }
         
       } else {
