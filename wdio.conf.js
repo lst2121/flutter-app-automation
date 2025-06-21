@@ -1,5 +1,4 @@
 const { join } = require('path');
-const HtmlReporter = require('@rpii/wdio-html-reporter').HtmlReporter;
 
 exports.config = {
   runner: 'local',

@@ -439,7 +439,7 @@ describe('Complete Registration Flow', () => {
         if (await zipField.isDisplayed()) {
           console.log('📝 Found Zip Code field using content-desc locator');
           
-          // Test zip field interaction
+          // Test zip field interaction - convert number to string
           await zipField.click();
           await driver.pause(500);
           await zipField.clearValue();
@@ -1021,9 +1021,9 @@ describe('SSN/TIN Field Validation', () => {
     await ssnField.clearValue();
     await ssnField.setValue('12-3456789');
     const val = await ssnField.getAttribute('text');
-    // App auto-formats TIN to SSN format
+    // App auto-formats TIN input to standard SSN format
     expect(val).toBe('123-45-6789');
-    console.log('✅ TIN auto-formatted to SSN format');
+    console.log('✅ TIN input auto-formatted to SSN format');
   });
 
   it('should handle alphanumeric input gracefully', async () => {

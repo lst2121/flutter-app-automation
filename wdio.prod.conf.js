@@ -15,18 +15,14 @@ exports.config = {
     'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.debug.apk'),
     'appium:appPackage': 'com.anytimeshift.employee',
     'appium:appActivity': '.MainActivity',
+    'appium:appWaitActivity': '*',
     'appium:autoGrantPermissions': true,
     'appium:noReset': false,
     'appium:newCommandTimeout': 30000,
-    'appium:adbExecTimeout': 60000,
-    // Debug-specific settings
-    'appium:enforceAppInstall': true,
-    'appium:allowTestPackages': true,
-    'appium:skipServerInstallation': false,
-    'appium:skipDeviceInitialization': false
+    'appium:adbExecTimeout': 60000
   }],
 
-  logLevel: 'info',
+  // logLevel: 'warn',
   bail: 0,
   waitforTimeout: 10000,
   connectionRetryTimeout: 120000,
@@ -40,19 +36,25 @@ exports.config = {
       basePath: '/'
     }
   }]],
-  
 
   framework: 'mocha',
 
-  reporters: ['spec'],
+  reporters: [
+    'spec',
+    ['allure', {
+      outputDir: 'allure-results',
+      disableWebdriverStepsReporting: true,
+      disableWebdriverScreenshotsReporting: false,
+    }]
+  ],
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 120000
+    timeout: 150000
   },
 
   hostname: '127.0.0.1',
   port: 4723,
   path: '/',
-  protocol: 'http'
-}; 
+  protocol: 'http',
+};

@@ -6,6 +6,7 @@
     "test": "wdio run ./wdio.conf.js",
     "test:all": "wdio run ./wdio.conf.js --spec ./test/specs/**/*.e2e.js",
     "test:registration": "wdio run ./wdio.conf.js --spec ./test/specs/registration-form-tests.e2e.js",
+    "test:prod:registration": "wdio run ./wdio.prod.conf.js --spec ./test/specs/registration-form-tests.e2e.js",
     "allure-report": "npx allure generate allure-results --clean -o allure-report && npx allure open allure-report",
     "generate:allure-report": "npx allure generate allure-results --clean -o allure-report",
     "open:allure-report": "npx allure open allure-report"
