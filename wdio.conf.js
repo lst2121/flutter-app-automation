@@ -41,15 +41,6 @@ exports.config = {
 
   reporters: [
     'spec',
-    [HtmlReporter, {
-      debug: false,
-      outputDir: join(__dirname, 'reports', 'html-reports'),
-      filename: 'report.html',
-      reportTitle: 'Flutter App Automation Test Report',
-      showInBrowser: true,
-      collapseTests: false,
-      useOnAfterCommandForScreenshot: true
-    }],
     ['allure', {
       outputDir: 'allure-results',
       disableWebdriverStepsReporting: true,

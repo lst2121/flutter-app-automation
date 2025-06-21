@@ -12,6 +12,7 @@ apps/
 Anytime Shift_1.0.45_APKPure/
 *.apk
 *.xapk
+clean-git.sh
 
 # Selector files (XML dumps)
 selectors_file/
@@ -23,12 +24,15 @@ allure-report/
 *.html
 *.json
 
+# Registration test files
+test/specs/registration-tests/
+
 # Documentation files
-*.md
-README*
 CONNECTING_YOUR_APP.md
 DOWNLOAD_EMPLOYEE_APP.md
 MOBILE_LOCATOR_GUIDE.md
+LOCAL_DEVELOPMENT_SETUP.md
+PROJECT_SUMMARY.md
 
 # Logs
 *.log
