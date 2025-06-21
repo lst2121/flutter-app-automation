@@ -16,13 +16,14 @@ exports.config = {
     'appium:app': join(__dirname, 'apps', 'com.anytimeshift.employee.debug.apk'),
     'appium:appPackage': 'com.anytimeshift.employee',
     'appium:appActivity': '.MainActivity',
+    'appium:appWaitActivity': '*',
     'appium:autoGrantPermissions': true,
     'appium:noReset': false,
     'appium:newCommandTimeout': 30000,
     'appium:adbExecTimeout': 60000
   }],
 
-  logLevel: 'warn',
+  // logLevel: 'warn',
   bail: 0,
   waitforTimeout: 10000,
   connectionRetryTimeout: 120000,

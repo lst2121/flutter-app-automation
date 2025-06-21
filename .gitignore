@@ -13,6 +13,7 @@ Anytime Shift_1.0.45_APKPure/
 *.apk
 *.xapk
 clean-git.sh
+lean-git.sh
 
 # Selector files (XML dumps)
 selectors_file/
@@ -25,7 +26,8 @@ allure-report/
 *.json
 
 # Registration test files
-test/specs/registration-tests/
+test/specs/experimental-tests/
+clean-git.sh
 
 # Documentation files
 CONNECTING_YOUR_APP.md
